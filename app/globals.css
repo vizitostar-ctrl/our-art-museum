@@ -1225,3 +1225,136 @@ img {
     width: 100%;
   }
 }
+
+
+/* =========================================
+   11. 학생 개인 작품관 - 작품 설명 영역 개선
+   원작 / 패러디 / AI 재해석 카드
+========================================= */
+
+/*
+  현재 개인 작품 페이지에서 사용하는
+  artwork-card-text와 기존 artwork-info를
+  모두 같은 디자인으로 처리합니다.
+*/
+
+.artwork-card-text,
+.artwork-info {
+  padding: 26px 28px 30px;
+}
+
+
+/* ORIGINAL / MY PARODY / AI REINTERPRETATION */
+
+.artwork-card-text .artwork-type,
+.artwork-info .artwork-type {
+  display: block;
+  margin: 0 0 11px;
+  color: #8a7c6b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  line-height: 1.4;
+}
+
+
+/* 원작 / 나의 패러디 / AI 재해석 제목 */
+
+.artwork-card-text h2,
+.artwork-card-text h3,
+.artwork-info h2,
+.artwork-info h3 {
+  margin: 0;
+  color: #24211d;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.6px;
+}
+
+
+/* 작품 설명 */
+
+.artwork-card-text p,
+.artwork-info p {
+  margin: 14px 0 0;
+  color: #685f55;
+  font-size: 14px;
+  line-height: 1.8;
+  word-break: keep-all;
+}
+
+
+/* 세 카드의 설명 영역 높이를 자연스럽게 맞춤 */
+
+.artwork-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.artwork-card-text,
+.artwork-info {
+  flex: 1;
+}
+
+
+/* =========================================
+   작품 이미지
+   가로 / 세로 / 정사각형 모두 대응
+========================================= */
+
+.artwork-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #ebe5da;
+}
+
+.artwork-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #ebe5da;
+}
+
+
+/* =========================================
+   태블릿
+========================================= */
+
+@media (max-width: 1100px) {
+  .artwork-card-text,
+  .artwork-info {
+    padding: 24px 25px 27px;
+  }
+}
+
+
+/* =========================================
+   모바일
+========================================= */
+
+@media (max-width: 700px) {
+  .artwork-card-text,
+  .artwork-info {
+    padding: 22px 22px 25px;
+  }
+
+  .artwork-card-text h2,
+  .artwork-card-text h3,
+  .artwork-info h2,
+  .artwork-info h3 {
+    font-size: 20px;
+  }
+
+  .artwork-card-text p,
+  .artwork-info p {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+}
