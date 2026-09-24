@@ -7,12 +7,22 @@ export default async function StudentArtworkPage({ params }) {
     <main className="student-page">
       <div className="student-page-inner">
 
-        {/* 전시실로 돌아가기 */}
-        <header className="student-page-header">
+        {/* 상단 이동 버튼 */}
+        <div className="student-action-buttons">
           <Link href="/class/1" className="backButton">
             ← 1반 전시실
           </Link>
 
+          <Link
+            href={`/class/1/student/${number}/register`}
+            className="registerButton"
+          >
+            ✏️ 내 작품 등록하기
+          </Link>
+        </div>
+
+        {/* 학생 작품 페이지 상단 */}
+        <header className="student-page-header">
           <span className="student-page-label">
             우리들의 온라인 미술관
           </span>
@@ -78,8 +88,12 @@ export default async function StudentArtworkPage({ params }) {
               </div>
 
               <div className="artwork-card-text">
-                <span className="artwork-type">AI REINTERPRETATION</span>
+                <span className="artwork-type">
+                  AI REINTERPRETATION
+                </span>
+
                 <h2>AI 재해석</h2>
+
                 <p>
                   원작에서 발견한 표현 특징을 프롬프트로
                   작성하여 AI로 다시 표현했습니다.
@@ -102,7 +116,9 @@ export default async function StudentArtworkPage({ params }) {
 
             <article className="note-card">
               <span className="note-number">01</span>
+
               <h3>원작에서 발견한 특징</h3>
+
               <p>
                 학생이 관찰한 색채, 붓질, 질감 등의 특징이
                 이곳에 표시됩니다.
@@ -111,7 +127,9 @@ export default async function StudentArtworkPage({ params }) {
 
             <article className="note-card">
               <span className="note-number">02</span>
+
               <h3>나의 표현 의도</h3>
+
               <p>
                 패러디 작품에서 무엇을 바꾸었고 어떻게
                 표현했는지 설명합니다.
@@ -120,7 +138,9 @@ export default async function StudentArtworkPage({ params }) {
 
             <article className="note-card">
               <span className="note-number">03</span>
+
               <h3>AI에게 전달한 표현 특징</h3>
+
               <p>
                 AI 이미지 제작을 위해 작성한 색채, 붓질,
                 질감 등의 표현 내용을 보여줍니다.
@@ -132,9 +152,16 @@ export default async function StudentArtworkPage({ params }) {
 
         {/* 감상 반응 */}
         <section className="reaction-section">
+
           <div>
-            <span className="reaction-label">ART REACTION</span>
-            <h2>이 작품을 어떻게 감상했나요?</h2>
+            <span className="reaction-label">
+              ART REACTION
+            </span>
+
+            <h2>
+              이 작품을 어떻게 감상했나요?
+            </h2>
+
             <p>
               작품의 순위를 정하는 것이 아니라,
               친구 작품에서 느낀 점을 표현해 보세요.
@@ -142,16 +169,35 @@ export default async function StudentArtworkPage({ params }) {
           </div>
 
           <div className="reaction-buttons">
-            <button type="button">💗 마음에 와닿아요</button>
-            <button type="button">🎨 색채가 인상적이에요</button>
-            <button type="button">💡 아이디어가 재미있어요</button>
+            <button
+              type="button"
+              className="reaction-button"
+            >
+              💗 마음에 와닿아요
+            </button>
+
+            <button
+              type="button"
+              className="reaction-button"
+            >
+              🎨 색채가 인상적이에요
+            </button>
+
+            <button
+              type="button"
+              className="reaction-button"
+            >
+              💡 아이디어가 재미있어요
+            </button>
           </div>
+
         </section>
 
         {/* 개인정보 안내 */}
         <footer className="student-footer">
           <p>
-            학생의 개인정보 보호를 위해 학년·반·번호만 표시합니다.
+            학생의 개인정보 보호를 위해
+            학년·반·번호만 표시합니다.
           </p>
         </footer>
 
