@@ -1,3 +1,8 @@
+/* =========================================
+   우리들의 온라인 미술관
+   전체 공통 스타일
+========================================= */
+
 * {
   box-sizing: border-box;
 }
@@ -6,23 +11,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
 }
 
 body {
-  font-family: Arial, "Noto Sans KR", sans-serif;
-  background: #f5f1e8;
-  color: #222;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
+  background: #f7f3eb;
+  color: #222222;
+  font-family:
+    Arial,
+    "Apple SD Gothic Neo",
+    "Noto Sans KR",
+    sans-serif;
 }
 
 a {
@@ -31,119 +29,590 @@ a {
 }
 
 img {
-  max-width: 100%;
   display: block;
+  max-width: 100%;
 }
 
-/* 미술관 전체 화면 */
+
+/* =========================================
+   미술관 전체
+========================================= */
+
 .museum {
   min-height: 100vh;
+  background: #f7f3eb;
 }
 
-/* 상단 */
+
+/* =========================================
+   미술관 상단 제목
+========================================= */
+
 .museum-header {
-  padding: 24px 40px;
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid #ded8cc;
+  background: #ffffff;
+  border-bottom: 1px solid #e3ddd2;
+  padding: 26px 32px;
 }
 
 .museum-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .museum-header p {
-  margin: 7px 0 0;
-  color: #666;
+  margin: 10px 0 0;
+  color: #665f57;
+  font-size: 16px;
 }
 
-/* 메인 로비 */
+
+/* =========================================
+   미술관 로비
+========================================= */
+
 .lobby {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 60px 30px 80px;
+  padding: 70px 32px 90px;
 }
 
 .lobby-title {
   text-align: center;
-  margin-bottom: 45px;
+  margin-bottom: 55px;
 }
 
 .lobby-title h2 {
-  font-size: 42px;
-  margin: 0 0 15px;
+  margin: 0;
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
 }
 
 .lobby-title p {
-  color: #666;
-  font-size: 17px;
-  line-height: 1.7;
+  margin: 22px 0 0;
+  color: #6c6257;
+  font-size: 18px;
+  line-height: 1.8;
 }
 
-/* 학급 전시실 */
+
+/* =========================================
+   반 전시실 카드 영역
+========================================= */
+
 .class-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 22px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 28px;
 }
 
+
+/* =========================================
+   반 카드
+========================================= */
+
 .class-card {
-  background: white;
-  border: 1px solid #ddd6ca;
-  border-radius: 18px;
-  padding: 18px;
-  transition: 0.25s;
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.06);
+  display: block;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid #dfd8cc;
+  border-radius: 20px;
+  box-shadow: 0 5px 18px rgba(60, 45, 25, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .class-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+  border-color: #cfc5b6;
+  box-shadow: 0 12px 28px rgba(60, 45, 25, 0.12);
 }
 
+
+/* 반 깃발 */
+
 .flag-area {
+  width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  background: #eee9df;
+  border-radius: 15px;
+  background: #eee8dd;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 15px;
-  color: #888;
+
+  overflow: hidden;
+
+  color: #8a8175;
+  font-size: 16px;
+
+  margin-bottom: 22px;
 }
+
+.class-flag-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* 반 이름 */
 
 .class-card h3 {
-  margin: 5px 0;
-  font-size: 20px;
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 800;
 }
 
-.class-card p {
+.class-card > p {
   margin: 0;
-  color: #777;
+  color: #7a7167;
   font-size: 14px;
 }
 
-/* 모바일 */
-@media (max-width: 900px) {
+.enter-text {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #eee9e1;
+
+  color: #6f6253;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   학급 전시실
+========================================= */
+
+.classroom {
+  min-height: 100vh;
+  background: #f7f3eb;
+}
+
+
+/* =========================================
+   학급 전시실 상단
+========================================= */
+
+.classHeader {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 36px 28px 25px;
+}
+
+
+/* 로비 돌아가기 */
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+
+  margin-bottom: 28px;
+
+  padding: 10px 16px;
+
+  background: #ffffff;
+  border: 1px solid #ded7cb;
+  border-radius: 999px;
+
+  color: #5e574f;
+  font-size: 14px;
+  font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.backButton:hover {
+  background: #eee8dd;
+  transform: translateX(-3px);
+}
+
+
+/* =========================================
+   학급 깃발
+========================================= */
+
+.classFlag {
+  width: 100%;
+  height: 180px;
+
+  margin-bottom: 30px;
+
+  border: 1px solid #dfd7ca;
+  border-radius: 24px;
+
+  background: linear-gradient(
+    135deg,
+    #eee8dd,
+    #f5f1e9
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 52px;
+
+  overflow: hidden;
+}
+
+
+/* =========================================
+   학급 이름
+========================================= */
+
+.classLabel {
+  display: inline-block;
+
+  margin-bottom: 12px;
+
+  padding: 7px 14px;
+
+  background: #ffffff;
+  border: 1px solid #ded7cb;
+  border-radius: 999px;
+
+  color: #766b5d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.classHeader h1 {
+  margin: 0;
+
+  color: #222222;
+
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
+}
+
+.classDescription {
+  margin: 18px 0 0;
+
+  color: #6c6257;
+
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+
+/* =========================================
+   학생 작품 전시 영역
+========================================= */
+
+.studentGallery {
+  max-width: 1400px;
+
+  margin: 15px auto 0;
+  padding: 0 28px 90px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 26px;
+}
+
+
+/* =========================================
+   학생 작품 카드
+========================================= */
+
+.studentCard {
+  background: #ffffff;
+
+  border: 1px solid #e1dbd1;
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 5px 20px
+    rgba(55, 43, 25, 0.06);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.studentCard:hover {
+  transform: translateY(-6px);
+
+  box-shadow:
+    0 14px 30px
+    rgba(55, 43, 25, 0.13);
+}
+
+
+/* =========================================
+   작품 대표 이미지 영역
+========================================= */
+
+.artPlaceholder {
+  width: 100%;
+
+  aspect-ratio: 4 / 3;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ebe5da,
+      #f6f2ea
+    );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #887e71;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  border-bottom: 1px solid #e8e1d7;
+}
+
+
+/* =========================================
+   학생 정보
+========================================= */
+
+.studentInfo {
+  padding: 20px;
+}
+
+.studentNumber {
+  display: inline-block;
+
+  margin-bottom: 8px;
+
+  color: #8a7b69;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.studentInfo h2 {
+  margin: 0 0 10px;
+
+  color: #222222;
+
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.studentInfo p {
+  margin: 0;
+
+  color: #766f67;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   태블릿
+========================================= */
+
+@media (max-width: 1100px) {
+
   .class-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
   }
 
-  .lobby-title h2 {
-    font-size: 34px;
+  .studentGallery {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 520px) {
+
+/* =========================================
+   작은 태블릿
+========================================= */
+
+@media (max-width: 780px) {
+
   .museum-header {
-    padding: 20px;
+    padding: 22px 20px;
+  }
+
+  .museum-header h1 {
+    font-size: 27px;
   }
 
   .lobby {
-    padding: 40px 18px;
+    padding:
+      50px 20px
+      70px;
+  }
+
+  .lobby-title h2 {
+    font-size: 36px;
   }
 
   .class-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+  }
+
+  .studentGallery {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+  }
+
+  .classFlag {
+    height: 140px;
+  }
+}
+
+
+/* =========================================
+   스마트폰
+========================================= */
+
+@media (max-width: 520px) {
+
+  .museum-header {
+    padding: 20px 16px;
+  }
+
+  .museum-header h1 {
+    font-size: 23px;
+  }
+
+  .museum-header p {
+    font-size: 13px;
+  }
+
+  .lobby {
+    padding:
+      38px 14px
+      60px;
+  }
+
+  .lobby-title {
+    margin-bottom: 35px;
+  }
+
+  .lobby-title h2 {
+    font-size: 31px;
+  }
+
+  .lobby-title p {
+    font-size: 14px;
+  }
+
+  .class-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+  }
+
+  .class-card {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  .flag-area {
+    border-radius: 11px;
+    margin-bottom: 14px;
+  }
+
+  .class-card h3 {
+    font-size: 17px;
+  }
+
+  .class-card > p {
+    font-size: 12px;
+  }
+
+  .enter-text {
+    font-size: 11px;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+
+  /* 학급 전시실 */
+
+  .classHeader {
+    padding:
+      22px 14px
+      18px;
+  }
+
+  .backButton {
+    margin-bottom: 20px;
+  }
+
+  .classFlag {
+    height: 110px;
+
+    margin-bottom: 22px;
+
+    border-radius: 16px;
+
+    font-size: 38px;
+  }
+
+  .classHeader h1 {
+    font-size: 30px;
+  }
+
+  .classDescription {
+    font-size: 14px;
+  }
+
+  .studentGallery {
+    padding:
+      0 14px
+      60px;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+  }
+
+  .studentCard {
+    border-radius: 14px;
+  }
+
+  .studentInfo {
+    padding: 13px;
+  }
+
+  .studentNumber {
+    font-size: 11px;
+  }
+
+  .studentInfo h2 {
+    font-size: 16px;
+  }
+
+  .studentInfo p {
+    font-size: 11px;
+  }
+
+  .artPlaceholder {
+    font-size: 13px;
   }
 }
