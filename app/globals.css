@@ -743,3 +743,485 @@ img {
     width: 100%;
   }
 }
+
+
+/* =========================================
+   10. 학생 작품 등록 페이지
+========================================= */
+
+.register-page {
+  min-height: 100vh;
+  background: #f7f3ea;
+}
+
+.register-inner {
+  width: min(1280px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 30px 0 100px;
+}
+
+
+/* =========================================
+   등록 페이지 상단
+========================================= */
+
+.register-header {
+  padding-bottom: 38px;
+  border-bottom: 1px solid #dfd5c7;
+}
+
+.register-header .backButton {
+  margin-bottom: 38px;
+}
+
+.register-label {
+  display: block;
+  width: fit-content;
+  margin-bottom: 12px;
+  color: #8a7c6b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+.register-header h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -2px;
+}
+
+.register-header p {
+  margin: 16px 0 0;
+  color: #685f55;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+
+/* =========================================
+   등록 페이지 공통 섹션
+========================================= */
+
+.register-section {
+  padding: 58px 0;
+  border-bottom: 1px solid #dfd5c7;
+}
+
+.register-section-title {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.register-section-title > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #8a7c6b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.register-section-title h2 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+
+.register-section-title p {
+  max-width: 650px;
+  margin: 13px auto 0;
+  color: #70665b;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+
+/* =========================================
+   STEP 01 - 작품 이미지 업로드
+========================================= */
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.upload-card {
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #ddd3c5;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(57, 44, 29, 0.05);
+}
+
+.upload-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.upload-heading > span {
+  display: flex;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eee6da;
+  color: #74685a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.upload-heading h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+
+
+/*
+   작품 미리보기 영역
+
+   가로 / 세로 / 정사각형 사진 모두
+   작품 전체가 잘리지 않도록 contain 사용
+*/
+
+.upload-box {
+  position: relative;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #eee8dd;
+  border: 1px dashed #cfc3b2;
+  border-radius: 15px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.upload-box:hover {
+  background: #e9e1d5;
+  border-color: #a99a87;
+  transform: translateY(-2px);
+}
+
+.upload-box input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #eee8dd;
+}
+
+.upload-empty {
+  display: flex;
+  padding: 25px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  color: #71685e;
+}
+
+.upload-empty::before {
+  content: "＋";
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #d5cab9;
+  border-radius: 50%;
+  color: #756a5e;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.upload-empty strong {
+  font-size: 16px;
+  color: #413b35;
+}
+
+.upload-empty span {
+  font-size: 13px;
+  color: #81776c;
+}
+
+.upload-help {
+  min-height: 42px;
+  margin: 14px 3px 0;
+  color: #746b61;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   STEP 02 - 작품 이야기
+========================================= */
+
+.writing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.writing-card {
+  position: relative;
+  display: flex;
+  min-height: 410px;
+  padding: 27px;
+  flex-direction: column;
+  background: #fffdf9;
+  border: 1px solid #ddd2c3;
+  border-radius: 18px;
+}
+
+.writing-number {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  background: #eee6da;
+  border-radius: 50%;
+  color: #74685a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.writing-card label {
+  display: block;
+  color: #292520;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.writing-card > p {
+  min-height: 70px;
+  margin: 11px 0 17px;
+  color: #6e655b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.writing-card textarea {
+  width: 100%;
+  min-height: 170px;
+  padding: 16px;
+  flex: 1;
+  resize: vertical;
+  outline: none;
+  background: #ffffff;
+  border: 1px solid #d9cebe;
+  border-radius: 13px;
+  color: #332e29;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.writing-card textarea::placeholder {
+  color: #aaa094;
+}
+
+.writing-card textarea:focus {
+  border-color: #a99a87;
+  box-shadow: 0 0 0 3px rgba(169, 154, 135, 0.12);
+}
+
+.character-count {
+  display: block;
+  margin-top: 8px;
+  color: #8b8176;
+  font-size: 11px;
+  text-align: right;
+}
+
+
+/* =========================================
+   작품 등록 완료 영역
+========================================= */
+
+.register-submit {
+  margin-top: 55px;
+  padding: 48px 30px;
+  background: #ffffff;
+  border: 1px solid #ddd3c5;
+  border-radius: 22px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(57, 44, 29, 0.04);
+}
+
+.register-submit > span {
+  display: block;
+  margin-bottom: 9px;
+  color: #8a7c6b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.register-submit h2 {
+  margin: 0;
+  font-size: 27px;
+  letter-spacing: -0.8px;
+}
+
+.register-submit p {
+  margin: 14px 0 26px;
+  color: #70675d;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.submit-artwork-button {
+  appearance: none;
+  min-width: 200px;
+  min-height: 50px;
+  padding: 0 28px;
+  background: #39332d;
+  border: 1px solid #39332d;
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.submit-artwork-button:hover {
+  background: #554b42;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(57, 51, 45, 0.18);
+}
+
+.submit-artwork-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================
+   등록 페이지 - 태블릿
+========================================= */
+
+@media (max-width: 1100px) {
+  .upload-grid,
+  .writing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .writing-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* =========================================
+   등록 페이지 - 모바일
+========================================= */
+
+@media (max-width: 700px) {
+  .register-inner {
+    width: calc(100% - 28px);
+    padding-top: 20px;
+  }
+
+  .register-header .backButton {
+    margin-bottom: 28px;
+  }
+
+  .register-header h1 {
+    font-size: 32px;
+    letter-spacing: -1.4px;
+  }
+
+  .register-header p {
+    font-size: 14px;
+  }
+
+  .register-section {
+    padding: 42px 0;
+  }
+
+  .register-section-title {
+    margin-bottom: 23px;
+  }
+
+  .register-section-title h2 {
+    font-size: 25px;
+  }
+
+  .upload-grid,
+  .writing-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .writing-card:last-child {
+    grid-column: auto;
+  }
+
+  .upload-card {
+    padding: 15px;
+  }
+
+  .upload-box {
+    aspect-ratio: 4 / 3;
+  }
+
+  .writing-card {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .writing-card > p {
+    min-height: auto;
+  }
+
+  .writing-card textarea {
+    min-height: 160px;
+  }
+
+  .register-submit {
+    margin-top: 40px;
+    padding: 36px 20px;
+  }
+
+  .register-submit h2 {
+    font-size: 23px;
+  }
+
+  .submit-artwork-button {
+    width: 100%;
+  }
+}
