@@ -1,6 +1,7 @@
-export default function Home() {
-  const classes = Array.from({ length: 10 }, (_, i) => i + 1);
+import Link from "next/link";
+import { classes } from "./data";
 
+export default function Home() {
   return (
     <main className="museum">
       <header className="museum-header">
@@ -19,15 +20,31 @@ export default function Home() {
         </div>
 
         <div className="class-grid">
-          {classes.map((classNumber) => (
-            <div className="class-card" key={classNumber}>
+          {classes.map((classroom) => (
+            <Link
+              href={`/class/${classroom.id}`}
+              className="class-card"
+              key={classroom.id}
+            >
               <div className="flag-area">
-                🏳️ {classNumber}반 깃발
+                {classroom.flag ? (
+                  <img
+                    src={classroom.flag}
+                    alt={`${classroom.name} 깃발`}
+                    className="class-flag-image"
+                  />
+                ) : (
+                  <span>🚩 {classroom.id}반 깃발</span>
+                )}
               </div>
 
-              <h3>2학년 {classNumber}반</h3>
+              <h3>{classroom.name}</h3>
               <p>학생 작품 전시실</p>
-            </div>
+
+              <div className="enter-text">
+                전시실 입장 →
+              </div>
+            </Link>
           ))}
         </div>
       </section>
