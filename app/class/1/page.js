@@ -5,7 +5,9 @@ export default function Class1Page() {
 
   return (
     <main className="classroom">
+
       <div className="classHeader">
+
         <Link href="/" className="backButton">
           ← 미술관 로비
         </Link>
@@ -25,16 +27,25 @@ export default function Class1Page() {
           <br />
           1반 학생들의 작품을 감상해 보세요.
         </p>
+
       </div>
 
       <section className="studentGallery">
+
         {students.map((student) => (
-          <div className="studentCard" key={student}>
+
+          <Link
+            href={`/class/1/student/${student}`}
+            className="studentCard"
+            key={student}
+          >
+
             <div className="artPlaceholder">
               <span>작품 준비 중</span>
             </div>
 
             <div className="studentInfo">
+
               <span className="studentNumber">
                 2-1 {student}번
               </span>
@@ -44,10 +55,15 @@ export default function Class1Page() {
               <p>
                 원작 · 패러디 · AI 재해석
               </p>
+
             </div>
-          </div>
+
+          </Link>
+
         ))}
+
       </section>
+
     </main>
   );
 }
