@@ -4,51 +4,246 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabase";
 
+const PAGE_SIZE = 20;
+
+const STATUS_OPTIONS = [
+  { value: "pending", label: "승인 대기" },
+  { value: "approved", label: "승인 완료" },
+  { value: "revision", label: "수정 필요" },
+  { value: "hidden", label: "숨김" },
+];
+
 export default function AdminPage() {
   const router = useRouter();
 
+  const [sessionReady, setSessionReady] = useState(false);
   const [artworks, setArtworks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentFilter, setCurrentFilter] = useState("pending");
   const [updatingId, setUpdatingId] = useState(null);
 
+  const [currentFilter, setCurrentFilter] =
+    useState("pending");
+
+  const [selectedClass, setSelectedClass] =
+    useState("all");
+
+  const [studentInput, setStudentInput] =
+    useState("");
+
+  const [studentNumberFilter, setStudentNumberFilter] =
+    useState("");
+
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [statusCounts, setStatusCounts] = useState({
+    pending: 0,
+    approved: 0,
+    revision: 0,
+    hidden: 0,
+    all: 0,
+  });
+
   useEffect(() => {
-    checkLoginAndLoad();
+    checkSession();
   }, []);
 
-  async function checkLoginAndLoad() {
+  useEffect(() => {
+    if (!sessionReady) return;
+
+    loadDashboard();
+  }, [
+    sessionReady,
+    currentFilter,
+    selectedClass,
+    studentNumberFilter,
+    page,
+  ]);
+
+  async function checkSession() {
     const {
       data: { session },
+      error,
     } = await supabase.auth.getSession();
 
-    if (!session) {
+    if (error || !session) {
       router.replace("/admin/login");
       return;
     }
 
-    await loadArtworks();
+    setSessionReady(true);
   }
 
-  async function loadArtworks() {
+  function applyBaseFilters(query) {
+    let filteredQuery = query;
+
+    if (selectedClass !== "all") {
+      filteredQuery = filteredQuery.eq(
+        "class_no",
+        Number(selectedClass)
+      );
+    }
+
+    if (studentNumberFilter !== "") {
+      filteredQuery = filteredQuery.eq(
+        "student_no",
+        Number(studentNumberFilter)
+      );
+    }
+
+    return filteredQuery;
+  }
+
+  async function getCount(status) {
+    let query = supabase
+      .from("artworks")
+      .select("id", {
+        count: "exact",
+        head: true,
+      });
+
+    query = applyBaseFilters(query);
+
+    if (status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return count || 0;
+  }
+
+  async function loadDashboard() {
     try {
       setIsLoading(true);
 
-      const { data, error } = await supabase
-        .from("artworks")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const start = (page - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE - 1;
 
-      if (error) {
-        throw error;
+      let artworkQuery = supabase
+        .from("artworks")
+        .select("*", {
+          count: "exact",
+        });
+
+      artworkQuery = applyBaseFilters(artworkQuery);
+
+      if (currentFilter !== "all") {
+        artworkQuery = artworkQuery.eq(
+          "status",
+          currentFilter
+        );
       }
 
-      setArtworks(data || []);
+      artworkQuery = artworkQuery
+        .order("class_no", {
+          ascending: true,
+        })
+        .order("student_no", {
+          ascending: true,
+        })
+        .order("created_at", {
+          ascending: false,
+        })
+        .range(start, end);
+
+      const [
+        pendingCount,
+        approvedCount,
+        revisionCount,
+        hiddenCount,
+        allCount,
+        artworkResult,
+      ] = await Promise.all([
+        getCount("pending"),
+        getCount("approved"),
+        getCount("revision"),
+        getCount("hidden"),
+        getCount("all"),
+        artworkQuery,
+      ]);
+
+      if (artworkResult.error) {
+        throw artworkResult.error;
+      }
+
+      setStatusCounts({
+        pending: pendingCount,
+        approved: approvedCount,
+        revision: revisionCount,
+        hidden: hiddenCount,
+        all: allCount,
+      });
+
+      setArtworks(artworkResult.data || []);
+      setTotalCount(artworkResult.count || 0);
+
+      const calculatedTotalPages = Math.max(
+        1,
+        Math.ceil(
+          (artworkResult.count || 0) / PAGE_SIZE
+        )
+      );
+
+      if (page > calculatedTotalPages) {
+        setPage(calculatedTotalPages);
+      }
     } catch (error) {
       console.error(error);
       alert("작품 목록을 불러오지 못했습니다.");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function changeStatusFilter(status) {
+    setCurrentFilter(status);
+    setPage(1);
+  }
+
+  function changeClassFilter(event) {
+    setSelectedClass(event.target.value);
+    setPage(1);
+  }
+
+  function handleStudentSearch(event) {
+    event.preventDefault();
+
+    const value = studentInput.trim();
+
+    if (value === "") {
+      setStudentNumberFilter("");
+      setPage(1);
+      return;
+    }
+
+    const studentNumber = Number(value);
+
+    if (
+      !Number.isInteger(studentNumber) ||
+      studentNumber < 1 ||
+      studentNumber > 50
+    ) {
+      alert(
+        "학생 번호는 1번부터 50번 사이로 입력해 주세요."
+      );
+      return;
+    }
+
+    setStudentNumberFilter(
+      String(studentNumber)
+    );
+    setPage(1);
+  }
+
+  function clearStudentSearch() {
+    setStudentInput("");
+    setStudentNumberFilter("");
+    setPage(1);
   }
 
   async function changeStatus(id, newStatus) {
@@ -66,13 +261,7 @@ export default function AdminPage() {
         throw error;
       }
 
-      setArtworks((current) =>
-        current.map((artwork) =>
-          artwork.id === id
-            ? { ...artwork, status: newStatus }
-            : artwork
-        )
-      );
+      await loadDashboard();
     } catch (error) {
       console.error(error);
       alert("작품 상태 변경에 실패했습니다.");
@@ -86,27 +275,64 @@ export default function AdminPage() {
     router.replace("/admin/login");
   }
 
-  const filteredArtworks = artworks.filter((artwork) => {
-    if (currentFilter === "all") return true;
-    return artwork.status === currentFilter;
-  });
-
-  const countByStatus = (status) =>
-    artworks.filter((artwork) => artwork.status === status).length;
-
   function formatDate(dateString) {
     if (!dateString) return "";
 
-    return new Date(dateString).toLocaleString("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(dateString).toLocaleString(
+      "ko-KR",
+      {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   }
 
-  if (isLoading) {
+  function getStatusLabel(status) {
+    if (status === "approved") {
+      return "승인 완료";
+    }
+
+    if (status === "revision") {
+      return "수정 필요";
+    }
+
+    if (status === "hidden") {
+      return "숨김";
+    }
+
+    return "승인 대기";
+  }
+
+  function getStatusBackground(status) {
+    if (status === "approved") {
+      return "#e8f4e7";
+    }
+
+    if (status === "revision") {
+      return "#fff1d9";
+    }
+
+    if (status === "hidden") {
+      return "#eeeeee";
+    }
+
+    return "#f4eadf";
+  }
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalCount / PAGE_SIZE)
+  );
+
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1
+  );
+
+  if (!sessionReady) {
     return (
       <main
         style={{
@@ -115,11 +341,10 @@ export default function AdminPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "16px",
           color: "#6e6255",
         }}
       >
-        작품 목록을 불러오는 중입니다...
+        로그인 상태를 확인하는 중입니다...
       </main>
     );
   }
@@ -178,8 +403,11 @@ export default function AdminPage() {
                 lineHeight: 1.7,
               }}
             >
-              학생이 제출한 작품을 확인하고
-              전시 여부를 결정할 수 있습니다.
+              반과 학생 번호를 선택하여
+              필요한 작품만 확인할 수 있습니다.
+              <br />
+              한 화면에는 최대 20명의 작품만
+              불러옵니다.
             </p>
           </div>
 
@@ -206,24 +434,21 @@ export default function AdminPage() {
             gridTemplateColumns:
               "repeat(auto-fit, minmax(160px, 1fr))",
             gap: "14px",
-            marginBottom: "30px",
+            marginBottom: "24px",
           }}
         >
-          {[
-            ["pending", "승인 대기"],
-            ["approved", "승인 완료"],
-            ["revision", "수정 필요"],
-            ["hidden", "숨김"],
-          ].map(([status, label]) => (
+          {STATUS_OPTIONS.map((option) => (
             <button
-              key={status}
+              key={option.value}
               type="button"
-              onClick={() => setCurrentFilter(status)}
+              onClick={() =>
+                changeStatusFilter(option.value)
+              }
               style={{
                 textAlign: "left",
                 padding: "20px",
                 border:
-                  currentFilter === status
+                  currentFilter === option.value
                     ? "2px solid #4b392a"
                     : "1px solid #ddd1bf",
                 borderRadius: "16px",
@@ -239,7 +464,7 @@ export default function AdminPage() {
                   fontSize: "13px",
                 }}
               >
-                {label}
+                {option.label}
               </span>
 
               <strong
@@ -248,38 +473,229 @@ export default function AdminPage() {
                   color: "#1d1712",
                 }}
               >
-                {countByStatus(status)}
+                {statusCounts[option.value]}
               </strong>
             </button>
           ))}
         </section>
 
-        <div
+        {/* 검색 / 반 필터 */}
+        <section
           style={{
-            marginBottom: "24px",
+            background: "#fffdfa",
+            border: "1px solid #ddd1bf",
+            borderRadius: "18px",
+            padding: "20px",
+            marginBottom: "22px",
           }}
         >
-          <button
-            type="button"
-            onClick={() => setCurrentFilter("all")}
+          <div
             style={{
-              border:
-                currentFilter === "all"
-                  ? "2px solid #4b392a"
-                  : "1px solid #d5c8b6",
-              background: "#fffdfa",
-              borderRadius: "999px",
-              padding: "9px 16px",
-              cursor: "pointer",
-              fontWeight: "700",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "end",
+              gap: "14px",
             }}
           >
-            전체 작품 {artworks.length}
-          </button>
+            <label
+              style={{
+                minWidth: "180px",
+                fontWeight: "700",
+                color: "#30281f",
+              }}
+            >
+              반 선택
+
+              <select
+                value={selectedClass}
+                onChange={changeClassFilter}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "11px 12px",
+                  border: "1px solid #d5c8b6",
+                  borderRadius: "10px",
+                  background: "#ffffff",
+                  fontSize: "14px",
+                }}
+              >
+                <option value="all">
+                  전체 반
+                </option>
+
+                {Array.from(
+                  { length: 10 },
+                  (_, index) => index + 1
+                ).map((classNumber) => (
+                  <option
+                    key={classNumber}
+                    value={classNumber}
+                  >
+                    2학년 {classNumber}반
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <form
+              onSubmit={handleStudentSearch}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "end",
+                gap: "8px",
+                flex: "1 1 360px",
+              }}
+            >
+              <label
+                style={{
+                  flex: "1 1 180px",
+                  fontWeight: "700",
+                  color: "#30281f",
+                }}
+              >
+                학생 번호 검색
+
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={studentInput}
+                  onChange={(event) =>
+                    setStudentInput(
+                      event.target.value
+                    )
+                  }
+                  placeholder="예: 12"
+                  style={{
+                    display: "block",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    marginTop: "8px",
+                    padding: "11px 12px",
+                    border: "1px solid #d5c8b6",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                  }}
+                />
+              </label>
+
+              <button
+                type="submit"
+                style={{
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "11px 18px",
+                  background: "#211a14",
+                  color: "#ffffff",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                검색
+              </button>
+
+              <button
+                type="button"
+                onClick={clearStudentSearch}
+                style={{
+                  border: "1px solid #d5c8b6",
+                  borderRadius: "999px",
+                  padding: "10px 16px",
+                  background: "#fffdfa",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                검색 초기화
+              </button>
+            </form>
+          </div>
+
+          <div
+            style={{
+              marginTop: "18px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              alignItems: "center",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                changeStatusFilter("all")
+              }
+              style={{
+                border:
+                  currentFilter === "all"
+                    ? "2px solid #4b392a"
+                    : "1px solid #d5c8b6",
+                background: "#fffdfa",
+                borderRadius: "999px",
+                padding: "9px 16px",
+                cursor: "pointer",
+                fontWeight: "700",
+              }}
+            >
+              전체 상태 {statusCounts.all}
+            </button>
+
+            {selectedClass !== "all" && (
+              <span
+                style={{
+                  padding: "8px 13px",
+                  borderRadius: "999px",
+                  background: "#f3eadf",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                }}
+              >
+                2학년 {selectedClass}반
+              </span>
+            )}
+
+            {studentNumberFilter !== "" && (
+              <span
+                style={{
+                  padding: "8px 13px",
+                  borderRadius: "999px",
+                  background: "#f3eadf",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                }}
+              >
+                {studentNumberFilter}번 검색 중
+              </span>
+            )}
+          </div>
+        </section>
+
+        {/* 현재 조회 정보 */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "10px",
+            marginBottom: "16px",
+            color: "#76695c",
+            fontSize: "14px",
+          }}
+        >
+          <span>
+            검색 결과 총 <strong>{totalCount}</strong>개
+          </span>
+
+          <span>
+            한 페이지 최대 {PAGE_SIZE}개 ·
+            {page} / {totalPages} 페이지
+          </span>
         </div>
 
         {/* 작품 목록 */}
-        {filteredArtworks.length === 0 ? (
+        {isLoading ? (
           <section
             style={{
               background: "#fffdfa",
@@ -290,7 +706,20 @@ export default function AdminPage() {
               color: "#776b5e",
             }}
           >
-            현재 해당 상태의 작품이 없습니다.
+            작품 목록을 불러오는 중입니다...
+          </section>
+        ) : artworks.length === 0 ? (
+          <section
+            style={{
+              background: "#fffdfa",
+              border: "1px solid #ddd1bf",
+              borderRadius: "18px",
+              padding: "50px 24px",
+              textAlign: "center",
+              color: "#776b5e",
+            }}
+          >
+            현재 조건에 해당하는 작품이 없습니다.
           </section>
         ) : (
           <div
@@ -299,7 +728,7 @@ export default function AdminPage() {
               gap: "24px",
             }}
           >
-            {filteredArtworks.map((artwork) => (
+            {artworks.map((artwork) => (
               <article
                 key={artwork.id}
                 style={{
@@ -309,11 +738,12 @@ export default function AdminPage() {
                   padding: "24px",
                 }}
               >
-                {/* 작품 기본 정보 */}
+                {/* 기본 정보 */}
                 <div
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
+                    justifyContent:
+                      "space-between",
                     alignItems: "flex-start",
                     gap: "20px",
                     marginBottom: "22px",
@@ -348,7 +778,10 @@ export default function AdminPage() {
                         fontSize: "13px",
                       }}
                     >
-                      제출일: {formatDate(artwork.created_at)}
+                      제출일:{" "}
+                      {formatDate(
+                        artwork.created_at
+                      )}
                     </p>
                   </div>
 
@@ -358,24 +791,16 @@ export default function AdminPage() {
                       borderRadius: "999px",
                       padding: "8px 13px",
                       background:
-                        artwork.status === "approved"
-                          ? "#e8f4e7"
-                          : artwork.status === "revision"
-                          ? "#fff1d9"
-                          : artwork.status === "hidden"
-                          ? "#eeeeee"
-                          : "#f4eadf",
+                        getStatusBackground(
+                          artwork.status
+                        ),
                       fontSize: "13px",
                       fontWeight: "700",
                     }}
                   >
-                    {artwork.status === "approved"
-                      ? "승인 완료"
-                      : artwork.status === "revision"
-                      ? "수정 필요"
-                      : artwork.status === "hidden"
-                      ? "숨김"
-                      : "승인 대기"}
+                    {getStatusLabel(
+                      artwork.status
+                    )}
                   </span>
                 </div>
 
@@ -390,14 +815,24 @@ export default function AdminPage() {
                   }}
                 >
                   {[
-                    ["원작", artwork.original_url],
-                    ["나의 패러디", artwork.parody_url],
-                    ["AI 재해석", artwork.ai_url],
+                    [
+                      "원작",
+                      artwork.original_url,
+                    ],
+                    [
+                      "나의 패러디",
+                      artwork.parody_url,
+                    ],
+                    [
+                      "AI 재해석",
+                      artwork.ai_url,
+                    ],
                   ].map(([label, url]) => (
                     <div
                       key={label}
                       style={{
-                        border: "1px solid #e0d5c5",
+                        border:
+                          "1px solid #e0d5c5",
                         borderRadius: "14px",
                         overflow: "hidden",
                         background: "#f3ede3",
@@ -408,21 +843,26 @@ export default function AdminPage() {
                           height: "220px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent:
+                            "center",
                         }}
                       >
                         {url ? (
                           <img
                             src={url}
                             alt={label}
+                            loading="lazy"
                             style={{
                               width: "100%",
                               height: "100%",
-                              objectFit: "contain",
+                              objectFit:
+                                "contain",
                             }}
                           />
                         ) : (
-                          <span>{label}</span>
+                          <span>
+                            {label}
+                          </span>
                         )}
                       </div>
 
@@ -456,7 +896,10 @@ export default function AdminPage() {
                       background: "#faf6ef",
                     }}
                   >
-                    <strong>원작에서 발견한 특징</strong>
+                    <strong>
+                      원작에서 발견한 특징
+                    </strong>
+
                     <p
                       style={{
                         marginBottom: 0,
@@ -475,7 +918,10 @@ export default function AdminPage() {
                       background: "#faf6ef",
                     }}
                   >
-                    <strong>나의 표현 의도</strong>
+                    <strong>
+                      나의 표현 의도
+                    </strong>
+
                     <p
                       style={{
                         marginBottom: 0,
@@ -494,7 +940,10 @@ export default function AdminPage() {
                       background: "#faf6ef",
                     }}
                   >
-                    <strong>AI에게 전달한 표현 특징</strong>
+                    <strong>
+                      AI에게 전달한 표현 특징
+                    </strong>
+
                     <p
                       style={{
                         marginBottom: 0,
@@ -517,9 +966,14 @@ export default function AdminPage() {
                 >
                   <button
                     type="button"
-                    disabled={updatingId === artwork.id}
+                    disabled={
+                      updatingId === artwork.id
+                    }
                     onClick={() =>
-                      changeStatus(artwork.id, "approved")
+                      changeStatus(
+                        artwork.id,
+                        "approved"
+                      )
                     }
                     style={{
                       border: "none",
@@ -536,12 +990,18 @@ export default function AdminPage() {
 
                   <button
                     type="button"
-                    disabled={updatingId === artwork.id}
+                    disabled={
+                      updatingId === artwork.id
+                    }
                     onClick={() =>
-                      changeStatus(artwork.id, "revision")
+                      changeStatus(
+                        artwork.id,
+                        "revision"
+                      )
                     }
                     style={{
-                      border: "1px solid #d5b77d",
+                      border:
+                        "1px solid #d5b77d",
                       borderRadius: "999px",
                       padding: "11px 18px",
                       background: "#fff7e9",
@@ -554,12 +1014,18 @@ export default function AdminPage() {
 
                   <button
                     type="button"
-                    disabled={updatingId === artwork.id}
+                    disabled={
+                      updatingId === artwork.id
+                    }
                     onClick={() =>
-                      changeStatus(artwork.id, "hidden")
+                      changeStatus(
+                        artwork.id,
+                        "hidden"
+                      )
                     }
                     style={{
-                      border: "1px solid #cfc8c0",
+                      border:
+                        "1px solid #cfc8c0",
                       borderRadius: "999px",
                       padding: "11px 18px",
                       background: "#f2f0ed",
@@ -572,12 +1038,18 @@ export default function AdminPage() {
 
                   <button
                     type="button"
-                    disabled={updatingId === artwork.id}
+                    disabled={
+                      updatingId === artwork.id
+                    }
                     onClick={() =>
-                      changeStatus(artwork.id, "pending")
+                      changeStatus(
+                        artwork.id,
+                        "pending"
+                      )
                     }
                     style={{
-                      border: "1px solid #d7c8b7",
+                      border:
+                        "1px solid #d7c8b7",
                       borderRadius: "999px",
                       padding: "11px 18px",
                       background: "#fffdfa",
@@ -591,6 +1063,104 @@ export default function AdminPage() {
               </article>
             ))}
           </div>
+        )}
+
+        {/* 페이지 이동 */}
+        {totalCount > PAGE_SIZE && (
+          <nav
+            style={{
+              marginTop: "30px",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() =>
+                setPage((current) =>
+                  Math.max(1, current - 1)
+                )
+              }
+              style={{
+                border: "1px solid #d5c8b6",
+                borderRadius: "999px",
+                padding: "9px 14px",
+                background: "#fffdfa",
+                cursor:
+                  page === 1
+                    ? "default"
+                    : "pointer",
+                opacity:
+                  page === 1 ? 0.45 : 1,
+              }}
+            >
+              ← 이전
+            </button>
+
+            {pageNumbers.map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() =>
+                  setPage(pageNumber)
+                }
+                style={{
+                  minWidth: "38px",
+                  height: "38px",
+                  border:
+                    page === pageNumber
+                      ? "2px solid #4b392a"
+                      : "1px solid #d5c8b6",
+                  borderRadius: "50%",
+                  background:
+                    page === pageNumber
+                      ? "#4b392a"
+                      : "#fffdfa",
+                  color:
+                    page === pageNumber
+                      ? "#ffffff"
+                      : "#231b15",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                }}
+              >
+                {pageNumber}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              disabled={page === totalPages}
+              onClick={() =>
+                setPage((current) =>
+                  Math.min(
+                    totalPages,
+                    current + 1
+                  )
+                )
+              }
+              style={{
+                border: "1px solid #d5c8b6",
+                borderRadius: "999px",
+                padding: "9px 14px",
+                background: "#fffdfa",
+                cursor:
+                  page === totalPages
+                    ? "default"
+                    : "pointer",
+                opacity:
+                  page === totalPages
+                    ? 0.45
+                    : 1,
+              }}
+            >
+              다음 →
+            </button>
+          </nav>
         )}
       </div>
     </main>
