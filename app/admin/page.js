@@ -270,6 +270,130 @@ export default function AdminPage() {
     }
   }
 
+  function getArtworkStoragePath(publicUrl) {
+    if (!publicUrl) return null;
+
+    const marker =
+      "/storage/v1/object/public/artworks/";
+
+    const markerIndex =
+      publicUrl.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return null;
+    }
+
+    const path = publicUrl
+      .slice(markerIndex + marker.length)
+      .split("?")[0];
+
+    try {
+      return decodeURIComponent(path);
+    } catch {
+      return path;
+    }
+  }
+
+
+  async function deleteArtwork(artwork) {
+    const confirmed = window.confirm(
+      `2학년 ${artwork.class_no}반 ${artwork.student_no}번 작품을 정말 삭제하시겠습니까?\n\n` +
+      "삭제하면 전시 및 관리자 목록에서 제거됩니다.\n" +
+      "삭제 후 학생은 접속코드를 이용해 작품을 다시 제출할 수 있습니다."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setUpdatingId(artwork.id);
+
+      /*
+        먼저 삭제할 이미지들의 Storage 경로를 확보합니다.
+      */
+      const storagePaths = [
+        getArtworkStoragePath(
+          artwork.original_url
+        ),
+        getArtworkStoragePath(
+          artwork.parody_url
+        ),
+        getArtworkStoragePath(
+          artwork.ai_url
+        ),
+      ].filter(Boolean);
+
+
+      /*
+        1. artworks 테이블에서 작품 삭제
+      */
+      const { error: deleteError } =
+        await supabase
+          .from("artworks")
+          .delete()
+          .eq("id", artwork.id);
+
+      if (deleteError) {
+        throw new Error(
+          `작품 삭제 실패: ${deleteError.message}`
+        );
+      }
+
+
+      /*
+        2. Storage에 남아 있는 이미지 정리
+
+        DB 삭제는 성공했지만 이미지 삭제가 실패하더라도
+        작품 자체는 이미 정상 삭제된 상태이므로
+        관리자에게만 알려 줍니다.
+      */
+      if (storagePaths.length > 0) {
+        const uniquePaths = [
+          ...new Set(storagePaths),
+        ];
+
+        const { error: storageError } =
+          await supabase.storage
+            .from("artworks")
+            .remove(uniquePaths);
+
+        if (storageError) {
+          console.error(
+            "Storage 이미지 삭제 실패:",
+            storageError
+          );
+
+          alert(
+            "작품은 삭제되었습니다.\n\n" +
+            "다만 일부 이미지 파일 정리에 실패했습니다."
+          );
+        } else {
+          alert(
+            "작품과 이미지가 정상적으로 삭제되었습니다."
+          );
+        }
+      } else {
+        alert(
+          "작품이 정상적으로 삭제되었습니다."
+        );
+      }
+
+      await loadDashboard();
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "작품 삭제 중 문제가 발생했습니다.\n\n" +
+        (error?.message ||
+          "잠시 후 다시 시도해 주세요.")
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+  
   async function handleLogout() {
     await supabase.auth.signOut();
     router.replace("/admin/login");
@@ -1058,6 +1182,35 @@ export default function AdminPage() {
                     }}
                   >
                     승인 대기로 변경
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={
+                      updatingId === artwork.id
+                    }
+                    onClick={() =>
+                      deleteArtwork(artwork)
+                    }
+                    style={{
+                      border:
+                        "1px solid #d8a6a1",
+                      borderRadius: "999px",
+                      padding: "11px 18px",
+                      background: "#fff1f0",
+                      color: "#9c3028",
+                      fontWeight: "700",
+                      cursor:
+                        updatingId === artwork.id
+                          ? "default"
+                          : "pointer",
+                      opacity:
+                        updatingId === artwork.id
+                          ? 0.6
+                          : 1,
+                    }}
+                  >
+                    🗑 작품 삭제
                   </button>
                 </div>
               </article>
