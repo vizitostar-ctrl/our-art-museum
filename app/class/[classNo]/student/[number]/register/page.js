@@ -477,30 +477,54 @@ export default function RegisterPage() {
     <main className="register-page">
       <div className="register-inner">
 
-        <header className="register-header">
+<header className="register-topbar">
 
-          <Link
-            href={`/class/${classNumber}/student/${studentNumber}`}
-            className="backButton"
-          >
-            ← 작품으로 돌아가기
-          </Link>
+  {/* 왼쪽 : 전시실로 돌아가기 */}
+  <Link
+    href={`/class/${classNumber}`}
+    className="register-topbar-button"
+  >
+    <span className="register-topbar-arrow">←</span>
+    <span>{classNumber}반 전시실</span>
+  </Link>
 
-          <span className="register-label">
-            STUDENT ARTWORK REGISTRATION
-          </span>
 
-          <h1>내 작품 전시하기</h1>
+  {/* 가운데 : 현재 페이지 제목 */}
+  <div className="register-topbar-main">
 
-          <p>
-            2학년 {classNumber}반{" "}
-            {studentNumber}번 작품을 등록합니다.
-            <br />
-            등록한 내용은 선생님의 확인 후
-            전시됩니다.
-          </p>
+    <div className="register-topbar-title">
+      <span className="register-topbar-icon">
+        ✏️
+      </span>
 
-        </header>
+      <h1>
+        내 작품 등록하기
+      </h1>
+    </div>
+
+    <p>
+      2학년 {classNumber}반 {studentNumber}번 ·
+      나만의 작품을 등록하고 전시해 보세요!
+    </p>
+
+  </div>
+
+
+  {/* 오른쪽 : 미술관 로비 */}
+  <Link
+    href="/"
+    className="register-topbar-button register-topbar-home"
+  >
+    <span className="register-topbar-icon-small">
+      🏛️
+    </span>
+
+    <span>
+      우리들의 온라인 미술관
+    </span>
+  </Link>
+
+</header>
 
         {/* ======================================
             STEP 00 학생 확인
