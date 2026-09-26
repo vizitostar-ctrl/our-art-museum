@@ -958,17 +958,28 @@ export default function RegisterPage() {
           <section className="register-submit">
 
             <span>
-              SUBMISSION STATUS
-            </span>
+  SUBMISSION STATUS
+</span>
 
-            <h2>
-              접속코드를 확인해 주세요
-            </h2>
+<h2>
+  {submissionState === "pending"
+    ? "승인 대기 중입니다"
+    : submissionState === "approved"
+    ? "이미 전시 중인 작품입니다"
+    : submissionState === "hidden"
+    ? "현재 제출할 수 없습니다"
+    : "접속코드를 확인해 주세요"}
+</h2>
 
-            <p>
-              학생 접속코드 확인이 완료되면
-              작품 등록 화면이 열립니다.
-            </p>
+<p>
+  {submissionState === "pending"
+    ? "작품 제출이 완료되었습니다. 선생님의 확인 후 온라인 미술관에 전시됩니다."
+    : submissionState === "approved"
+    ? "선생님의 승인이 완료되어 온라인 미술관에 전시 중입니다."
+    : submissionState === "hidden"
+    ? "현재 작품을 다시 제출할 수 없습니다. 선생님께 문의해 주세요."
+    : "학생 접속코드 확인이 완료되면 작품 등록 화면이 열립니다."}
+</p>
 
           </section>
         )}
