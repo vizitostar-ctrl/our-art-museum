@@ -1190,6 +1190,37 @@ export default function AdminPage() {
                       updatingId === artwork.id
                     }
                     onClick={() =>
+                      router.push(
+                        `/admin/edit/${artwork.id}`
+                      )
+                    }
+                    style={{
+                      border:
+                        "1px solid #9e8bb7",
+                      borderRadius: "999px",
+                      padding: "11px 18px",
+                      background: "#f4effa",
+                      color: "#49385e",
+                      fontWeight: "700",
+                      cursor:
+                        updatingId === artwork.id
+                          ? "default"
+                          : "pointer",
+                      opacity:
+                        updatingId === artwork.id
+                          ? 0.6
+                          : 1,
+                    }}
+                  >
+                    ✏️ 교사 수정
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={
+                      updatingId === artwork.id
+                    }
+                    onClick={() =>
                       deleteArtwork(artwork)
                     }
                     style={{
