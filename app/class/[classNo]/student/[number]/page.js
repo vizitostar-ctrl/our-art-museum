@@ -41,6 +41,28 @@ export default async function StudentArtworkPage({ params }) {
     console.error("작품 불러오기 오류:", error);
   }
 
+  const numberStyle = {
+    width: "34px",
+    height: "34px",
+    flexShrink: 0,
+    borderRadius: "50%",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#f2eadf",
+    border: "1px solid #ddcdb9",
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#8b6846",
+  };
+
+  const metaStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "10px",
+  };
+
   return (
     <main className="student-page">
       <div className="student-page-inner">
@@ -80,50 +102,47 @@ export default async function StudentArtworkPage({ params }) {
         </header>
 
         {!artwork ? (
-          <>
-            {/* 승인 대기 화면 */}
-            <section className="artist-note">
-              <div className="artist-note-heading">
-                <span>EXHIBITION STATUS</span>
-                <h2>아직 승인된 작품이 없습니다</h2>
-              </div>
+          <section className="artist-note">
+            <div className="artist-note-heading">
+              <span>EXHIBITION STATUS</span>
+              <h2>아직 승인된 작품이 없습니다</h2>
+            </div>
 
-              <div className="note-grid">
-                <article className="note-card">
-                  <span className="note-number">01</span>
+            <div className="note-grid">
+              <article className="note-card">
+                <span className="note-number">01</span>
 
-                  <h3>작품을 제출했나요?</h3>
+                <h3>작품을 제출했나요?</h3>
 
-                  <p>
-                    작품을 제출했다면 현재 선생님의 확인을
-                    기다리고 있는 중입니다.
-                  </p>
-                </article>
+                <p>
+                  작품을 제출했다면 현재 선생님의 확인을
+                  기다리고 있는 중입니다.
+                </p>
+              </article>
 
-                <article className="note-card">
-                  <span className="note-number">02</span>
+              <article className="note-card">
+                <span className="note-number">02</span>
 
-                  <h3>승인 후 전시됩니다</h3>
+                <h3>승인 후 전시됩니다</h3>
 
-                  <p>
-                    선생님이 작품과 설명을 확인한 뒤 승인하면
-                    이 페이지에 실제 작품이 표시됩니다.
-                  </p>
-                </article>
+                <p>
+                  선생님이 작품과 설명을 확인한 뒤 승인하면
+                  이 페이지에 실제 작품이 표시됩니다.
+                </p>
+              </article>
 
-                <article className="note-card">
-                  <span className="note-number">03</span>
+              <article className="note-card">
+                <span className="note-number">03</span>
 
-                  <h3>개인정보 보호</h3>
+                <h3>개인정보 보호</h3>
 
-                  <p>
-                    학생 이름은 표시하지 않고
-                    학년·반·번호만 사용합니다.
-                  </p>
-                </article>
-              </div>
-            </section>
-          </>
+                <p>
+                  학생 이름은 표시하지 않고
+                  학년·반·번호만 사용합니다.
+                </p>
+              </article>
+            </div>
+          </section>
         ) : (
           <>
             {/* 작품 3개 비교 */}
@@ -138,11 +157,8 @@ export default async function StudentArtworkPage({ params }) {
 
                 {/* 원작 */}
                 <article className="artwork-card">
-                  <div className="artwork-image">
-                    <span className="artwork-number">
-                      01
-                    </span>
 
+                  <div className="artwork-image">
                     {artwork.original_url ? (
                       <img
                         src={artwork.original_url}
@@ -156,9 +172,16 @@ export default async function StudentArtworkPage({ params }) {
                   </div>
 
                   <div className="artwork-card-text">
-                    <span className="artwork-type">
-                      ORIGINAL
-                    </span>
+
+                    <div style={metaStyle}>
+                      <span style={numberStyle}>
+                        01
+                      </span>
+
+                      <span className="artwork-type">
+                        ORIGINAL
+                      </span>
+                    </div>
 
                     <h2>원작</h2>
 
@@ -171,11 +194,8 @@ export default async function StudentArtworkPage({ params }) {
 
                 {/* 패러디 */}
                 <article className="artwork-card">
-                  <div className="artwork-image">
-                    <span className="artwork-number">
-                      02
-                    </span>
 
+                  <div className="artwork-image">
                     {artwork.parody_url ? (
                       <img
                         src={artwork.parody_url}
@@ -189,9 +209,16 @@ export default async function StudentArtworkPage({ params }) {
                   </div>
 
                   <div className="artwork-card-text">
-                    <span className="artwork-type">
-                      MY PARODY
-                    </span>
+
+                    <div style={metaStyle}>
+                      <span style={numberStyle}>
+                        02
+                      </span>
+
+                      <span className="artwork-type">
+                        MY PARODY
+                      </span>
+                    </div>
 
                     <h2>나의 패러디</h2>
 
@@ -204,11 +231,8 @@ export default async function StudentArtworkPage({ params }) {
 
                 {/* AI 재해석 */}
                 <article className="artwork-card">
-                  <div className="artwork-image">
-                    <span className="artwork-number">
-                      03
-                    </span>
 
+                  <div className="artwork-image">
                     {artwork.ai_url ? (
                       <img
                         src={artwork.ai_url}
@@ -222,9 +246,16 @@ export default async function StudentArtworkPage({ params }) {
                   </div>
 
                   <div className="artwork-card-text">
-                    <span className="artwork-type">
-                      AI REINTERPRETATION
-                    </span>
+
+                    <div style={metaStyle}>
+                      <span style={numberStyle}>
+                        03
+                      </span>
+
+                      <span className="artwork-type">
+                        AI REINTERPRETATION
+                      </span>
+                    </div>
 
                     <h2>AI 재해석</h2>
 
@@ -309,6 +340,7 @@ export default async function StudentArtworkPage({ params }) {
               </div>
 
               <div className="reaction-buttons">
+
                 <button
                   type="button"
                   className="reaction-button"
@@ -329,8 +361,8 @@ export default async function StudentArtworkPage({ params }) {
                 >
                   💡 아이디어가 재미있어요
                 </button>
-              </div>
 
+              </div>
             </section>
           </>
         )}
