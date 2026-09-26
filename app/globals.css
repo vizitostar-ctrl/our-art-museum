@@ -3,6 +3,38 @@
    전체 공통 디자인
 ========================================= */
 
+:root {
+  /* 배경 */
+  --color-bg: #f7f3ea;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fffdf9;
+  --color-surface-warm: #fffaf2;
+  --color-placeholder-bg: #eee8dd;
+  --color-image-bg: #ebe5da;
+
+  /* 테두리 */
+  --color-border: #ddd3c5;
+  --color-border-soft: #dfd5c7;
+  --color-border-strong: #d9ccba;
+
+  /* 텍스트 */
+  --color-text: #24211d;
+  --color-text-strong: #211a14;
+  --color-text-muted: #685f55;
+  --color-text-faint: #8a7c6b;
+  --color-text-hint: #857c70;
+
+  /* 포인트 */
+  --color-badge-bg: #eee6da;
+  --color-badge-text: #74685a;
+  --color-dark: #39332d;
+  --color-dark-hover: #554b42;
+
+  /* 반응형 기준점 (표준화: 태블릿 1100px, 모바일 700px) */
+  --bp-tablet: 1100px;
+  --bp-mobile: 700px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -14,8 +46,8 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background: #f7f3ea;
-  color: #24211d;
+  background: var(--color-bg);
+  color: var(--color-text);
   font-family:
     "Pretendard",
     "Noto Sans KR",
@@ -40,12 +72,12 @@ img {
 
 .museum {
   min-height: 100vh;
-  background: #f7f3ea;
+  background: var(--color-bg);
 }
 
 .museum-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e8dfd0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-soft);
   padding: 26px 32px;
 }
 
@@ -95,7 +127,7 @@ img {
 .class-card {
   display: block;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #ded4c5;
   border-radius: 22px;
   box-shadow: 0 8px 24px rgba(64, 49, 31, 0.05);
@@ -113,12 +145,12 @@ img {
   height: 180px;
   margin: 20px 20px 0;
   border-radius: 17px;
-  background: #eee8dc;
+  background: var(--color-placeholder-bg);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #857c70;
+  color: var(--color-text-hint);
 }
 
 .flag-image {
@@ -152,7 +184,7 @@ img {
 
 .classroom {
   min-height: 100vh;
-  background: #f7f3ea;
+  background: var(--color-bg);
   padding-bottom: 90px;
 }
 
@@ -168,9 +200,9 @@ img {
   justify-content: center;
   min-height: 38px;
   padding: 0 15px;
-  border: 1px solid #d8cebe;
+  border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: #fffdf9;
+  background: var(--color-surface-alt);
   font-size: 14px;
   font-weight: 700;
   transition: background 0.2s ease;
@@ -185,7 +217,7 @@ img {
   margin-top: 24px;
   border: 1px solid #ddd2c2;
   border-radius: 20px;
-  background: #eee8dc;
+  background: var(--color-placeholder-bg);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -206,7 +238,7 @@ img {
   padding: 6px 12px;
   border: 1px solid #ded3c3;
   border-radius: 999px;
-  background: #fffdf9;
+  background: var(--color-surface-alt);
   color: #74695d;
   font-size: 12px;
   font-weight: 700;
@@ -235,7 +267,7 @@ img {
 
 .studentCard {
   overflow: hidden;
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #ded4c6;
   border-radius: 16px;
   box-shadow: 0 5px 16px rgba(61, 48, 32, 0.04);
@@ -251,7 +283,7 @@ img {
 
 .artPlaceholder {
   height: 210px;
-  background: #eee8dd;
+  background: var(--color-placeholder-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,7 +321,7 @@ img {
 
 .student-page {
   min-height: 100vh;
-  background: #f7f3ea;
+  background: var(--color-bg);
 }
 
 .student-page-inner {
@@ -300,7 +332,7 @@ img {
 
 .student-page-header {
   padding-bottom: 35px;
-  border-bottom: 1px solid #dfd5c7;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .student-page-header .backButton {
@@ -310,7 +342,7 @@ img {
 .student-page-label {
   display: inline-block;
   padding: 7px 13px;
-  background: #fffdf9;
+  background: var(--color-surface-alt);
   border: 1px solid #ded3c4;
   border-radius: 999px;
   color: #71685e;
@@ -334,6 +366,9 @@ img {
 
 /* =========================================
    4. 원작 / 패러디 / AI 작품 3단 비교
+
+   artwork-card / artwork-image / artwork-number는
+   섹션 11에서 다시 정의하지 않고 여기 한 곳에서만 관리합니다.
 ========================================= */
 
 .artwork-section {
@@ -348,7 +383,7 @@ img {
 .artwork-section-title span {
   display: inline-block;
   margin-bottom: 8px;
-  color: #8a7d6d;
+  color: var(--color-text-faint);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -367,17 +402,20 @@ img {
 }
 
 .artwork-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(57, 44, 29, 0.06);
 }
 
 .artwork-image {
   position: relative;
+  width: 100%;
   aspect-ratio: 4 / 3;
-  background: #ebe5da;
+  background: var(--color-image-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,10 +426,21 @@ img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #ebe5da;
+  object-position: center;
+  background: var(--color-image-bg);
 }
 
+/*
+  이미지 좌상단에 붙는 01·02·03 번호.
+  위치를 이 규칙 하나로 고정해서 !important 없이도
+  다른 곳에서 덮어쓸 일이 없도록 합니다.
+*/
 .artwork-number {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -405,32 +454,43 @@ img {
   font-weight: 800;
 }
 
+/* 원작 / 나의 패러디 / AI 재해석 텍스트 영역 */
+.artwork-card-text,
 .artwork-info {
-  padding: 24px;
+  flex: 1;
+  padding: 26px 28px 30px;
 }
 
-.artwork-type {
-  display: inline-block;
-  margin-bottom: 9px;
-  color: #8a7c6b;
+.artwork-card-text .artwork-type,
+.artwork-info .artwork-type {
+  display: block;
+  margin: 0 0 11px;
+  color: var(--color-text-faint);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.4px;
+  line-height: 1.4;
 }
 
+.artwork-card-text h2,
+.artwork-card-text h3,
 .artwork-info h2,
 .artwork-info h3 {
   margin: 0;
-  font-size: 23px;
-  letter-spacing: -0.7px;
+  color: var(--color-text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.6px;
 }
 
+.artwork-card-text p,
 .artwork-info p {
-  min-height: 50px;
-  margin: 13px 0 0;
-  color: #685f55;
+  margin: 14px 0 0;
+  color: var(--color-text-muted);
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.8;
+  word-break: keep-all;
 }
 
 
@@ -440,7 +500,7 @@ img {
 
 .artist-note {
   padding: 55px 0 20px;
-  border-top: 1px solid #dfd5c7;
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .artist-note-heading {
@@ -451,7 +511,7 @@ img {
 .artist-note-heading span {
   display: block;
   margin-bottom: 8px;
-  color: #8a7c6b;
+  color: var(--color-text-faint);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -471,7 +531,7 @@ img {
 
 .note-card {
   padding: 28px;
-  background: #fffdf9;
+  background: var(--color-surface-alt);
   border: 1px solid #ddd2c3;
   border-radius: 18px;
 }
@@ -484,8 +544,8 @@ img {
   justify-content: center;
   margin-bottom: 18px;
   border-radius: 50%;
-  background: #eee6da;
-  color: #74685a;
+  background: var(--color-badge-bg);
+  color: var(--color-badge-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -510,8 +570,8 @@ img {
 .reaction-section {
   margin-top: 55px;
   padding: 40px;
-  background: #ffffff;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   text-align: center;
 }
@@ -556,8 +616,11 @@ img {
 
 
 /* =========================================
-   7. 현재 작성된 개인 페이지 코드 호환용
-   기존 className도 최대한 예쁘게 표시
+   7. 과거 페이지에서 쓰던 className 호환용
+
+   studentDetail / artComparison 등 표기가 다른 이전 클래스명을
+   당분간 같은 디자인으로 보이게 해주는 임시 매핑입니다.
+   컴포넌트 쪽 className이 하나로 통일되면 이 블록은 지워도 됩니다.
 ========================================= */
 
 .studentDetail,
@@ -584,8 +647,8 @@ img {
 .ai-artwork {
   overflow: hidden;
   padding: 24px;
-  background: #ffffff;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
 }
 
@@ -595,8 +658,8 @@ img {
 .story-section {
   margin-top: 30px;
   padding: 28px;
-  background: #fffdf9;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
 }
 
@@ -620,6 +683,11 @@ img {
   .art-comparison,
   .artworks {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .artwork-card-text,
+  .artwork-info {
+    padding: 24px 25px 27px;
   }
 }
 
@@ -726,8 +794,22 @@ img {
     padding: 40px 0;
   }
 
+  .artwork-card-text,
   .artwork-info {
-    padding: 20px;
+    padding: 22px 22px 25px;
+  }
+
+  .artwork-card-text h2,
+  .artwork-card-text h3,
+  .artwork-info h2,
+  .artwork-info h3 {
+    font-size: 20px;
+  }
+
+  .artwork-card-text p,
+  .artwork-info p {
+    font-size: 14px;
+    line-height: 1.75;
   }
 
   .reaction-section {
@@ -751,7 +833,7 @@ img {
 
 .register-page {
   min-height: 100vh;
-  background: #f7f3ea;
+  background: var(--color-bg);
 }
 
 .register-inner {
@@ -762,12 +844,12 @@ img {
 
 
 /* =========================================
-   등록 페이지 상단
+   등록 페이지 상단 헤더 (기본형)
 ========================================= */
 
 .register-header {
   padding-bottom: 38px;
-  border-bottom: 1px solid #dfd5c7;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .register-header .backButton {
@@ -778,7 +860,7 @@ img {
   display: block;
   width: fit-content;
   margin-bottom: 12px;
-  color: #8a7c6b;
+  color: var(--color-text-faint);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.8px;
@@ -793,9 +875,113 @@ img {
 
 .register-header p {
   margin: 16px 0 0;
-  color: #685f55;
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.8;
+}
+
+
+/* =========================================
+   등록 페이지 상단 헤더 (3단 topbar형)
+========================================= */
+
+.register-topbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 260px;
+  align-items: center;
+  gap: 28px;
+
+  box-sizing: border-box;
+  margin: 28px 0 50px;
+  padding: 24px 28px;
+
+  background: var(--color-surface-warm);
+  border: 1px solid #e4d8c7;
+  border-radius: 24px;
+}
+
+.register-topbar-button {
+  min-height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 14px 20px;
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+
+  color: #2b2119;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.register-topbar-button:hover {
+  transform: translateY(-2px);
+  background: var(--color-surface-alt);
+  box-shadow: 0 8px 20px rgba(53, 39, 27, 0.08);
+}
+
+.register-topbar-arrow {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.register-topbar-main {
+  min-width: 0;
+
+  padding: 4px 32px;
+
+  border-left: 1px solid #ded3c4;
+  border-right: 1px solid #ded3c4;
+
+  text-align: center;
+}
+
+.register-topbar-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  margin-bottom: 8px;
+}
+
+.register-topbar-title h1 {
+  margin: 0;
+
+  color: var(--color-text-strong);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.register-topbar-icon {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.register-topbar-main p {
+  margin: 0;
+
+  color: #83766a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.register-topbar-icon-small {
+  font-size: 20px;
 }
 
 
@@ -805,7 +991,7 @@ img {
 
 .register-section {
   padding: 58px 0;
-  border-bottom: 1px solid #dfd5c7;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .register-section-title {
@@ -816,7 +1002,7 @@ img {
 .register-section-title > span {
   display: block;
   margin-bottom: 8px;
-  color: #8a7c6b;
+  color: var(--color-text-faint);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -849,8 +1035,8 @@ img {
 
 .upload-card {
   padding: 20px;
-  background: #ffffff;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(57, 44, 29, 0.05);
 }
@@ -870,8 +1056,8 @@ img {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #eee6da;
-  color: #74685a;
+  background: var(--color-badge-bg);
+  color: var(--color-badge-text);
   font-size: 11px;
   font-weight: 800;
 }
@@ -898,7 +1084,7 @@ img {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #eee8dd;
+  background: var(--color-placeholder-bg);
   border: 1px dashed #cfc3b2;
   border-radius: 15px;
   cursor: pointer;
@@ -927,7 +1113,7 @@ img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #eee8dd;
+  background: var(--color-placeholder-bg);
 }
 
 .upload-empty {
@@ -992,7 +1178,7 @@ img {
   min-height: 410px;
   padding: 27px;
   flex-direction: column;
-  background: #fffdf9;
+  background: var(--color-surface-alt);
   border: 1px solid #ddd2c3;
   border-radius: 18px;
 }
@@ -1004,9 +1190,9 @@ img {
   align-items: center;
   justify-content: center;
   margin-bottom: 18px;
-  background: #eee6da;
+  background: var(--color-badge-bg);
   border-radius: 50%;
-  color: #74685a;
+  color: var(--color-badge-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -1034,7 +1220,7 @@ img {
   flex: 1;
   resize: vertical;
   outline: none;
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #d9cebe;
   border-radius: 13px;
   color: #332e29;
@@ -1071,8 +1257,8 @@ img {
 .register-submit {
   margin-top: 55px;
   padding: 48px 30px;
-  background: #ffffff;
-  border: 1px solid #ddd3c5;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   text-align: center;
   box-shadow: 0 8px 24px rgba(57, 44, 29, 0.04);
@@ -1081,7 +1267,7 @@ img {
 .register-submit > span {
   display: block;
   margin-bottom: 9px;
-  color: #8a7c6b;
+  color: var(--color-text-faint);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -1105,8 +1291,8 @@ img {
   min-width: 200px;
   min-height: 50px;
   padding: 0 28px;
-  background: #39332d;
-  border: 1px solid #39332d;
+  background: var(--color-dark);
+  border: 1px solid var(--color-dark);
   border-radius: 999px;
   color: #ffffff;
   font-family: inherit;
@@ -1120,7 +1306,7 @@ img {
 }
 
 .submit-artwork-button:hover {
-  background: #554b42;
+  background: var(--color-dark-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(57, 51, 45, 0.18);
 }
@@ -1131,7 +1317,7 @@ img {
 
 
 /* =========================================
-   등록 페이지 - 태블릿
+   등록 페이지 - 태블릿 (통일된 기준점: 1100px)
 ========================================= */
 
 @media (max-width: 1100px) {
@@ -1143,11 +1329,33 @@ img {
   .writing-card:last-child {
     grid-column: 1 / -1;
   }
+
+  .register-topbar {
+    grid-template-columns: 1fr;
+    gap: 18px;
+
+    padding: 20px;
+    margin-bottom: 36px;
+  }
+
+  .register-topbar-main {
+    order: -1;
+
+    padding: 24px 8px;
+
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 1px solid #ded3c4;
+  }
+
+  .register-topbar-button {
+    width: 100%;
+  }
 }
 
 
 /* =========================================
-   등록 페이지 - 모바일
+   등록 페이지 - 모바일 (통일된 기준점: 700px)
 ========================================= */
 
 @media (max-width: 700px) {
@@ -1167,6 +1375,27 @@ img {
 
   .register-header p {
     font-size: 14px;
+  }
+
+  .register-topbar {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .register-topbar-title {
+    align-items: center;
+  }
+
+  .register-topbar-title h1 {
+    font-size: 28px;
+  }
+
+  .register-topbar-icon {
+    font-size: 27px;
+  }
+
+  .register-topbar-main p {
+    font-size: 13px;
   }
 
   .register-section {
@@ -1224,164 +1453,4 @@ img {
   .submit-artwork-button {
     width: 100%;
   }
-}
-
-
-/* =========================================
-   11. 학생 개인 작품관 - 작품 설명 영역 개선
-   원작 / 패러디 / AI 재해석 카드
-========================================= */
-
-/*
-  현재 개인 작품 페이지에서 사용하는
-  artwork-card-text와 기존 artwork-info를
-  모두 같은 디자인으로 처리합니다.
-*/
-
-.artwork-card-text,
-.artwork-info {
-  padding: 26px 28px 30px;
-}
-
-
-/* ORIGINAL / MY PARODY / AI REINTERPRETATION */
-
-.artwork-card-text .artwork-type,
-.artwork-info .artwork-type {
-  display: block;
-  margin: 0 0 11px;
-  color: #8a7c6b;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.4px;
-  line-height: 1.4;
-}
-
-
-/* 원작 / 나의 패러디 / AI 재해석 제목 */
-
-.artwork-card-text h2,
-.artwork-card-text h3,
-.artwork-info h2,
-.artwork-info h3 {
-  margin: 0;
-  color: #24211d;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.35;
-  letter-spacing: -0.6px;
-}
-
-
-/* 작품 설명 */
-
-.artwork-card-text p,
-.artwork-info p {
-  margin: 14px 0 0;
-  color: #685f55;
-  font-size: 14px;
-  line-height: 1.8;
-  word-break: keep-all;
-}
-
-
-/* 세 카드의 설명 영역 높이를 자연스럽게 맞춤 */
-
-.artwork-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.artwork-card-text,
-.artwork-info {
-  flex: 1;
-}
-
-
-/* =========================================
-   작품 이미지
-   가로 / 세로 / 정사각형 모두 대응
-========================================= */
-
-.artwork-image {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #ebe5da;
-}
-
-.artwork-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  background: #ebe5da;
-}
-
-
-/* =========================================
-   태블릿
-========================================= */
-
-@media (max-width: 1100px) {
-  .artwork-card-text,
-  .artwork-info {
-    padding: 24px 25px 27px;
-  }
-}
-
-
-/* =========================================
-   모바일
-========================================= */
-
-@media (max-width: 700px) {
-  .artwork-card-text,
-  .artwork-info {
-    padding: 22px 22px 25px;
-  }
-
-  .artwork-card-text h2,
-  .artwork-card-text h3,
-  .artwork-info h2,
-  .artwork-info h3 {
-    font-size: 20px;
-  }
-
-  .artwork-card-text p,
-  .artwork-info p {
-    font-size: 14px;
-    line-height: 1.75;
-  }
-}
-
-
-/* =========================================
-   작품 비교 카드 01·02·03 위치 보정
-   ========================================= */
-
-.artwork-image {
-  position: relative;
-}
-
-.artwork-number {
-  position: absolute !important;
-  top: 16px !important;
-  left: 16px !important;
-  right: auto !important;
-  transform: none !important;
-  z-index: 3;
-}
-
-
-/* =========================================
-   작품 등록 페이지 상단 헤더
-   ========================================= */
-
-.register-topbar {
-  ...
 }
