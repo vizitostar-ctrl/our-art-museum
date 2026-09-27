@@ -1,3 +1,4 @@
+import ArtworkReactions from "../../../../ArtworkReactions";
 import gallery from "../../../../Gallery.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -65,7 +66,7 @@ export default async function StudentArtworkPage({ params }) {
   };
 
   return (
-    <main className={`student-page ${gallery.gallery}`}>
+    <main className={`student-page ${gallery.gallery} ${gallery.compact}`}>
       <div className="student-page-inner">
 
         <nav className={gallery.breadcrumb} aria-label="현재 위치">
@@ -101,9 +102,7 @@ export default async function StudentArtworkPage({ params }) {
           </h1>
 
           <p>
-            명화를 관찰하고, 패러디하고,
-            <br />
-            AI를 활용하여 원작의 표현 특징을 다시 해석했습니다.
+            원작의 표현을 관찰하고, 나의 패러디에 다시 입히다.
           </p>
         </header>
 
@@ -327,49 +326,7 @@ export default async function StudentArtworkPage({ params }) {
               </div>
             </section>
 
-            {/* 감상 반응 */}
-            <section className="reaction-section">
-
-              <div>
-                <span className="reaction-label">
-                  ART REACTION
-                </span>
-
-                <h2>
-                  이 작품을 어떻게 감상했나요?
-                </h2>
-
-                <p>
-                  작품의 순위를 정하는 것이 아니라,
-                  친구 작품에서 느낀 점을 표현해 보세요.
-                </p>
-              </div>
-
-              <div className="reaction-buttons">
-
-                <button
-                  type="button"
-                  className="reaction-button"
-                >
-                  💗 마음에 와닿아요
-                </button>
-
-                <button
-                  type="button"
-                  className="reaction-button"
-                >
-                  🎨 색채가 인상적이에요
-                </button>
-
-                <button
-                  type="button"
-                  className="reaction-button"
-                >
-                  💡 아이디어가 재미있어요
-                </button>
-
-              </div>
-            </section>
+            <ArtworkReactions artworkId={artwork.id} />
           </>
         )}
 

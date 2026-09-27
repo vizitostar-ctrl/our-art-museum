@@ -49,3 +49,27 @@
 @media(max-width:1100px){.gallery :global(.studentGallery){grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}.gallery :global(.artwork-grid){gap:14px;}.gallery :global(.artwork-card){padding:10px;}}
 @media(max-width:700px){.gallery{padding:22px 18px 32px;}.gallery :global(.studentGallery){grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}.gallery :global(.studentCard){padding:9px;}.gallery :global(.artwork-grid),.gallery :global(.note-grid){grid-template-columns:1fr;}.gallery :global(.artwork-image){height:auto;aspect-ratio:4/5;}.gallery :global(.student-page-header){padding:32px 0;}.gallery :global(.classDescription),.gallery :global(.student-page-header) p{font-size:12px;}.gallery :global(.reaction-section){padding:20px;}.gallery :global(.note-card){padding:22px;}}
 @media(prefers-reduced-motion:reduce){.gallery :global(.studentCard){transition:none;}.gallery :global(.studentCard):hover{transform:none;}}
+
+/* Compact personal gallery: leave the first viewport for the complete images. */
+.gallery.compact { padding-top:12px; }
+.compact .breadcrumb { margin-bottom:10px; font-size:10px; }
+.gallery.compact :global(.backButton), .gallery.compact :global(.registerButton) { min-height:34px; padding:6px 12px; font-size:11px; }
+.gallery.compact :global(.student-page-header) { padding:14px 0 16px; }
+.gallery.compact :global(.student-page-label) { margin:0 0 6px; font-size:10px; }
+.gallery.compact :global(.student-page-header) h1 { font-size:clamp(23px,2.5vw,31px); }
+.gallery.compact :global(.student-page-header) h1::after { margin:9px auto; width:32px; }
+.gallery.compact :global(.student-page-header) p { font-size:12px; line-height:1.5; }
+.gallery.compact :global(.artwork-section-title) { margin:0 0 10px; }
+.gallery.compact :global(.artwork-section-title) > span { display:none; }
+.gallery.compact :global(.artwork-section-title) h2 { font-size:15px; margin:0; }
+.gallery.compact :global(.artwork-card) { padding:10px; }
+.gallery.compact :global(.artwork-image) { height:clamp(120px,calc(100svh - 330px),560px); aspect-ratio:auto; padding:7px; }
+.gallery.compact :global(.artwork-card-text) { padding:10px 3px 4px; }
+.gallery.compact :global(.artwork-card-text) > div { display:none !important; }
+.gallery.compact :global(.artwork-card-text) h2 { font-size:17px; margin:0 0 6px; }
+.gallery.compact :global(.artwork-card-text) p { font-size:11px; line-height:1.6; }
+.gallery.compact :global(.reaction-button)[aria-pressed="true"] { background:#e9dec8; border-color:#907044; color:#4d3b23; }
+.gallery.compact :global(.reaction-button):disabled { opacity:.6; cursor:wait; }
+@media(min-width:600px) { .gallery.compact :global(.artwork-grid) { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } }
+@media(max-width:599px) { .gallery.compact :global(.artwork-grid) {grid-template-columns:1fr;} .gallery.compact :global(.artwork-image) {height:auto;aspect-ratio:4/5;} }
+@media(min-width:600px) and (max-height:650px) { .gallery.compact :global(.student-page-label), .gallery.compact :global(.student-page-header) p {display:none;} .gallery.compact :global(.student-page-header){padding:8px 0;} .gallery.compact :global(.artwork-image){height:calc(100svh - 230px);} .gallery.compact :global(.artwork-card-text) p {display:none;} }
