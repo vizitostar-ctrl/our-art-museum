@@ -1,3 +1,4 @@
+import gallery from "../../../../Gallery.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "../../../../supabase";
@@ -64,9 +65,14 @@ export default async function StudentArtworkPage({ params }) {
   };
 
   return (
-    <main className="student-page">
+    <main className={`student-page ${gallery.gallery}`}>
       <div className="student-page-inner">
 
+        <nav className={gallery.breadcrumb} aria-label="현재 위치">
+          <Link href="/">전체 로비</Link><span aria-hidden="true">/</span>
+          <Link href={`/class/${classNumber}`}>2학년 {classNumber}반</Link><span aria-hidden="true">/</span>
+          <span>{studentNumber}번 작품관</span>
+        </nav>
         {/* 상단 이동 버튼 */}
         <div className="student-action-buttons">
           <Link
@@ -80,7 +86,7 @@ export default async function StudentArtworkPage({ params }) {
             href={`/class/${classNumber}/student/${studentNumber}/register`}
             className="registerButton"
           >
-            ✏️ 내 작품 등록하기
+            내 작품 등록하기 ↗
           </Link>
         </div>
 

@@ -1,3 +1,4 @@
+import gallery from "../../Gallery.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "../../supabase";
@@ -65,7 +66,7 @@ export default async function ClassPage({ params }) {
   }
 
   return (
-    <main className="classroom">
+    <main className={`classroom ${gallery.gallery}`}>
 
       <div className="classHeader">
 
@@ -77,7 +78,7 @@ export default async function ClassPage({ params }) {
         </Link>
 
         <div className="classFlag">
-          🚩
+          <span className={gallery.roomMark}>{String(classNumber).padStart(2, "0")}</span>
         </div>
 
         <p className="classLabel">
@@ -132,7 +133,7 @@ export default async function ClassPage({ params }) {
                       height: "100%",
                       objectFit: "contain",
                       display: "block",
-                      background: "#ebe5da",
+                      background: "#f5f0e6",
                     }}
                   />
                 ) : (
