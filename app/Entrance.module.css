@@ -244,7 +244,7 @@
 @keyframes seamBloom { 0% { opacity: 0; } 15%,35% { opacity: 1; transform: scaleX(2); } 100% { opacity: 0; transform: scaleX(10); } }
 @keyframes openLeftDoor { to { transform: rotateY(-104deg); } }
 @keyframes openRightDoor { to { transform: rotateY(104deg); } }
-@keyframes sceneApproach { 0% { transform: translate(-50%,-50%) scale(1); } 25% { transform: translate(-50%,-50%) scale(1.04); } 73% { transform: translate(-50%,-50%) scale(1.8); } 100% { transform: translate(-50%,-50%) scale(2.55); } }
+@keyframes sceneApproach { 0% { transform: translate(-50%,-50%) scale(1); } 25% { transform: translate(-50%,-50%) scale(1.04); } 73% { transform: translate(-50%,-50%) scale(1.5); } 100% { transform: translate(-50%,-50%) scale(1.95); } }
 @keyframes pigmentBloom { 0% { opacity: 0; } 25% { opacity: .85; } 100% { opacity: 1; mask-size: 240% 240%, 260% 260%, 240% 240%; } }
 @keyframes pigmentFinish { to { opacity: 1; } }
 @keyframes sceneReveal { to { opacity: 0; } }
@@ -296,3 +296,8 @@
 @media (prefers-reduced-motion: reduce) {
   .opening, .opening * { animation: none !important; transition: none !important; }
 }
+
+/* The lobby softly appears after the entrance has finished. */
+.lobby[aria-hidden="false"] { animation: lobbyArrive .45s ease-out both; }
+@keyframes lobbyArrive { from { opacity: .85; } to { opacity: 1; } }
+@media(prefers-reduced-motion:reduce){.lobby[aria-hidden="false"]{animation:none;}}
