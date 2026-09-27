@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./Entrance.module.css";
 
-const KEY = "our-art-museum-entered-v4";
+const KEY = "our-art-museum-entered-v5";
 
 export default function Entrance({ children }) {
   const [phase, setPhase] = useState("closed");
   const timerRef = useRef(null);
+  const [ready, setReady] = useState(false);
   const lobbyRef = useRef(null);
   const enterButtonRef = useRef(null);
 
@@ -22,7 +23,16 @@ export default function Entrance({ children }) {
       enterButtonRef.current?.focus();
     }
 
-    return () => clearTimeout(timerRef.current);
+    let active = true;
+    const preload = (src) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+    });
+    Promise.all(["/museum-entrance.png", "/sunflowers-pencil.png", "/sunflowers-oil.png"].map(preload))
+      .then((loaded) => { if (active) setReady(loaded.every(Boolean)); });
+    return () => { active = false; clearTimeout(timerRef.current); };
   }, []);
 
   useEffect(() => {
@@ -51,7 +61,7 @@ export default function Entrance({ children }) {
   }
 
   function startEntrance() {
-    if (phase !== "closed") return;
+    if (phase !== "closed" || !ready) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finishEntrance();
@@ -60,7 +70,7 @@ export default function Entrance({ children }) {
 
     enterButtonRef.current?.blur();
     setPhase("opening");
-    timerRef.current = setTimeout(finishEntrance, 3000);
+    timerRef.current = setTimeout(finishEntrance, 4500);
   }
 
   const isOpening = phase === "opening";
@@ -92,62 +102,10 @@ export default function Entrance({ children }) {
               <div className={styles.portalInner}>
                 <div className={styles.portalBaseLight} />
 
-                <div className={styles.artLayer}>
-                  <svg
-                    className={styles.sketch}
-                    viewBox="0 0 900 1600"
-                    preserveAspectRatio="xMidYMid slice"
-                  >
-                    <path
-                      className={`${styles.pencilLine} ${styles.line1}`}
-                      d="M70 1220 C170 1100 250 1130 340 1020 C420 920 500 940 590 830 C680 720 730 660 820 590"
-                    />
-                    <path
-                      className={`${styles.pencilLine} ${styles.line2}`}
-                      d="M110 980 C220 920 280 860 360 800 C450 735 520 760 620 665 C715 575 765 495 840 430"
-                    />
-                    <path
-                      className={`${styles.pencilLine} ${styles.line3}`}
-                      d="M90 760 C180 690 235 650 310 590 C390 525 500 500 590 430 C670 365 735 300 805 230"
-                    />
-                    <path
-                      className={`${styles.pencilLine} ${styles.line4}`}
-                      d="M180 1320 C210 1180 260 1065 330 940 C400 820 455 690 520 555"
-                    />
-                    <path
-                      className={`${styles.pencilLine} ${styles.line5}`}
-                      d="M665 1360 C640 1240 615 1125 645 990 C675 860 740 710 765 555"
-                    />
-                  </svg>
-
-                  {/* Pencil and pigment share the exact same paths. */}
-                  <svg className={styles.pigment} viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice">
-                    <g style={{ "--paint": "#d69c37", "--delay": "1.080s" }}>
-                      <path className={styles.paintPath} pathLength="1" d="M70 1220 C170 1100 250 1130 340 1020 C420 920 500 940 590 830 C680 720 730 660 820 590" />
-                      <path className={styles.bristle} pathLength="1" d="M70 1220 C170 1100 250 1130 340 1020 C420 920 500 940 590 830 C680 720 730 660 820 590" />
-                    </g>
-                    <g style={{ "--paint": "#338a9b", "--delay": "1.135s" }}>
-                      <path className={styles.paintPath} pathLength="1" d="M110 980 C220 920 280 860 360 800 C450 735 520 760 620 665 C715 575 765 495 840 430" />
-                      <path className={styles.bristle} pathLength="1" d="M110 980 C220 920 280 860 360 800 C450 735 520 760 620 665 C715 575 765 495 840 430" />
-                    </g>
-                    <g style={{ "--paint": "#535396", "--delay": "1.190s" }}>
-                      <path className={styles.paintPath} pathLength="1" d="M90 760 C180 690 235 650 310 590 C390 525 500 500 590 430 C670 365 735 300 805 230" />
-                      <path className={styles.bristle} pathLength="1" d="M90 760 C180 690 235 650 310 590 C390 525 500 500 590 430 C670 365 735 300 805 230" />
-                    </g>
-                    <g style={{ "--paint": "#ce7853", "--delay": "1.245s" }}>
-                      <path className={styles.paintPath} pathLength="1" d="M180 1320 C210 1180 260 1065 330 940 C400 820 455 690 520 555" />
-                      <path className={styles.bristle} pathLength="1" d="M180 1320 C210 1180 260 1065 330 940 C400 820 455 690 520 555" />
-                    </g>
-                    <g style={{ "--paint": "#518472", "--delay": "1.300s" }}>
-                      <path className={styles.paintPath} pathLength="1" d="M665 1360 C640 1240 615 1125 645 990 C675 860 740 710 765 555" />
-                      <path className={styles.bristle} pathLength="1" d="M665 1360 C640 1240 615 1125 645 990 C675 860 740 710 765 555" />
-                    </g>
-                  </svg>
-                  <div className={`${styles.wash} ${styles.wash1}`} />
-                  <div className={`${styles.wash} ${styles.wash2}`} />
-                  <div className={`${styles.wash} ${styles.wash3}`} />
-                  <div className={styles.paintMist} />
-                  <div className={styles.portalFlash} />
+                <div className={styles.artwork}>
+                  <img className={styles.artImage} src="/sunflowers-pencil.png" alt="" />
+                  <img className={`${styles.artImage} ${styles.colorBloom}`} src="/sunflowers-oil.png" alt="" />
+                  <img className={`${styles.artImage} ${styles.colorFinish}`} src="/sunflowers-oil.png" alt="" />
                 </div>
               </div>
             </div>
@@ -173,9 +131,9 @@ export default function Entrance({ children }) {
               type="button"
               className={styles.enterButton}
               onClick={startEntrance}
-              disabled={isOpening}
+              disabled={isOpening || !ready}
             >
-              {isOpening ? "전시관으로 들어가는 중…" : "전시관 입장하기 →"}
+              {isOpening ? "전시관으로 들어가는 중…" : ready ? "전시관 입장하기 →" : "작품을 준비하고 있어요…"}
             </button>
 
             <p className={styles.helperText}>
