@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./Entrance.module.css";
 
-const KEY = "our-art-museum-entered-v3";
+const KEY = "our-art-museum-entered-v4";
 
 export default function Entrance({ children }) {
   const [phase, setPhase] = useState("closed");
@@ -58,6 +58,7 @@ export default function Entrance({ children }) {
       return;
     }
 
+    enterButtonRef.current?.blur();
     setPhase("opening");
     timerRef.current = setTimeout(finishEntrance, 3000);
   }
@@ -69,7 +70,7 @@ export default function Entrance({ children }) {
       <div
         ref={lobbyRef}
         tabIndex={-1}
-        inert={phase !== "entered" ? "" : undefined}
+        inert={phase !== "entered"}
         aria-hidden={phase !== "entered"}
         className={styles.lobby}
       >
@@ -119,23 +120,32 @@ export default function Entrance({ children }) {
                     />
                   </svg>
 
-                  {/* 수채화/색 번짐 */}
+                  {/* Pencil and pigment share the exact same paths. */}
+                  <svg className={styles.pigment} viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice">
+                    <g style={{ "--paint": "#d69c37", "--delay": "1.080s" }}>
+                      <path className={styles.paintPath} pathLength="1" d="M70 1220 C170 1100 250 1130 340 1020 C420 920 500 940 590 830 C680 720 730 660 820 590" />
+                      <path className={styles.bristle} pathLength="1" d="M70 1220 C170 1100 250 1130 340 1020 C420 920 500 940 590 830 C680 720 730 660 820 590" />
+                    </g>
+                    <g style={{ "--paint": "#338a9b", "--delay": "1.135s" }}>
+                      <path className={styles.paintPath} pathLength="1" d="M110 980 C220 920 280 860 360 800 C450 735 520 760 620 665 C715 575 765 495 840 430" />
+                      <path className={styles.bristle} pathLength="1" d="M110 980 C220 920 280 860 360 800 C450 735 520 760 620 665 C715 575 765 495 840 430" />
+                    </g>
+                    <g style={{ "--paint": "#535396", "--delay": "1.190s" }}>
+                      <path className={styles.paintPath} pathLength="1" d="M90 760 C180 690 235 650 310 590 C390 525 500 500 590 430 C670 365 735 300 805 230" />
+                      <path className={styles.bristle} pathLength="1" d="M90 760 C180 690 235 650 310 590 C390 525 500 500 590 430 C670 365 735 300 805 230" />
+                    </g>
+                    <g style={{ "--paint": "#ce7853", "--delay": "1.245s" }}>
+                      <path className={styles.paintPath} pathLength="1" d="M180 1320 C210 1180 260 1065 330 940 C400 820 455 690 520 555" />
+                      <path className={styles.bristle} pathLength="1" d="M180 1320 C210 1180 260 1065 330 940 C400 820 455 690 520 555" />
+                    </g>
+                    <g style={{ "--paint": "#518472", "--delay": "1.300s" }}>
+                      <path className={styles.paintPath} pathLength="1" d="M665 1360 C640 1240 615 1125 645 990 C675 860 740 710 765 555" />
+                      <path className={styles.bristle} pathLength="1" d="M665 1360 C640 1240 615 1125 645 990 C675 860 740 710 765 555" />
+                    </g>
+                  </svg>
                   <div className={`${styles.wash} ${styles.wash1}`} />
                   <div className={`${styles.wash} ${styles.wash2}`} />
                   <div className={`${styles.wash} ${styles.wash3}`} />
-                  <div className={`${styles.wash} ${styles.wash4}`} />
-
-                  {/* 붓자국 */}
-                  <div className={`${styles.stroke} ${styles.stroke1}`}>
-                    <span />
-                  </div>
-                  <div className={`${styles.stroke} ${styles.stroke2}`}>
-                    <span />
-                  </div>
-                  <div className={`${styles.stroke} ${styles.stroke3}`}>
-                    <span />
-                  </div>
-
                   <div className={styles.paintMist} />
                   <div className={styles.portalFlash} />
                 </div>
@@ -144,6 +154,7 @@ export default function Entrance({ children }) {
 
             <div className={`${styles.door} ${styles.leftDoor}`} />
             <div className={`${styles.door} ${styles.rightDoor}`} />
+            <div className={styles.seamLight} />
           </div>
 
           <div className={styles.shade} />
@@ -152,7 +163,7 @@ export default function Entrance({ children }) {
             <p className={styles.eyebrow}>MASTERPIECE · PARODY · AI</p>
             <h1>우리들의 온라인 미술관</h1>
             <p className={styles.subtitle}>
-              연필선이 색이 되고, 색이 작품이 되는 순간
+              나의 상상에, 명화의 표현을 입히다
             </p>
           </div>
 
@@ -168,7 +179,7 @@ export default function Entrance({ children }) {
             </button>
 
             <p className={styles.helperText}>
-              문이 열리면, 스케치가 색과 붓자국으로 변하며 전시관이 나타납니다.
+              명화를 관찰하고, 패러디하고, AI로 표현을 다시 해석하다
             </p>
           </div>
 
