@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./Entrance.module.css";
 
-const KEY = "our-art-museum-entered-v5";
+const KEY = "our-art-museum-entered-v6";
 
 export default function Entrance({ children }) {
   const [phase, setPhase] = useState("closed");
@@ -30,7 +30,7 @@ export default function Entrance({ children }) {
       img.onerror = () => resolve(false);
       img.src = src;
     });
-    Promise.all(["/museum-entrance.png", "/sunflowers-pencil.png", "/sunflowers-oil.png"].map(preload))
+    Promise.all(["/museum-entrance.png", "/gallery-sketch.png", "/gallery-real.png"].map(preload))
       .then((loaded) => { if (active) setReady(loaded.every(Boolean)); });
     return () => { active = false; clearTimeout(timerRef.current); };
   }, []);
@@ -103,9 +103,9 @@ export default function Entrance({ children }) {
                 <div className={styles.portalBaseLight} />
 
                 <div className={styles.artwork}>
-                  <img className={styles.artImage} src="/sunflowers-pencil.png" alt="" />
-                  <img className={`${styles.artImage} ${styles.colorBloom}`} src="/sunflowers-oil.png" alt="" />
-                  <img className={`${styles.artImage} ${styles.colorFinish}`} src="/sunflowers-oil.png" alt="" />
+                  <img className={styles.artImage} src="/gallery-sketch.png" alt="" />
+                  <img className={`${styles.artImage} ${styles.colorBloom}`} src="/gallery-real.png" alt="" />
+                  <img className={`${styles.artImage} ${styles.colorFinish}`} src="/gallery-real.png" alt="" />
                 </div>
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function Entrance({ children }) {
 
           <span className={styles.srOnly} role="status">
             {isOpening
-              ? "문이 열리고, 문 안쪽에서 연필선이 색과 붓자국으로 변한 뒤 전시관 로비가 나타납니다."
+              ? "문이 열리고, 스케치 전시실에 빛과 색이 채워진 뒤 반별 로비가 나타납니다."
               : ""}
           </span>
         </section>

@@ -229,7 +229,7 @@
 /* Photo-textured artwork; 4.5 seconds from click to the real lobby. */
 .artwork { position: absolute; inset: 0; overflow: hidden; background: #eee4cd; }
 .artImage { position: absolute; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: center; }
-.colorBloom { opacity: 0; mask-image: radial-gradient(ellipse at 34% 36%, #000 0%, transparent 60%), radial-gradient(ellipse at 67% 60%, #000 0%, transparent 65%), radial-gradient(ellipse at 47% 80%, #000 0%, transparent 55%); mask-size: 20% 25%, 24% 30%, 22% 28%; mask-position: 34% 36%, 67% 60%, 47% 80%; mask-repeat: no-repeat; }
+.colorBloom { opacity: 0; mask-image: radial-gradient(ellipse at 50% 12%, #000 0%, transparent 60%), radial-gradient(ellipse at 65% 47%, #000 0%, transparent 65%), radial-gradient(ellipse at 45% 85%, #000 0%, transparent 55%); mask-size: 20% 25%, 24% 30%, 22% 28%; mask-position: 50% 12%, 65% 47%, 45% 85%; mask-repeat: no-repeat; }
 .colorFinish { opacity: 0; }
 .seamLight { position: absolute; left: calc(var(--portal-left) + var(--door-width)); top: var(--portal-top); height: var(--portal-height); width: 3px; z-index: 5; opacity: 0; background: #fff4d1; box-shadow: 0 0 20px 4px #ffe1a3; pointer-events: none; }
 .opening .leftDoor { animation: openLeftDoor 1s .15s cubic-bezier(.22,.76,.25,1) forwards; }
