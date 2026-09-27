@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Entrance from "./Entrance";
 import { classes } from "./data";
 
 export default function Home() {
   return (
+    <Entrance>
     <main className="museum">
       <header className="museum-header">
         <h1>🎨 우리들의 온라인 미술관</h1>
@@ -49,5 +51,6 @@ export default function Home() {
         </div>
       </section>
     </main>
+    </Entrance>
   );
 }
