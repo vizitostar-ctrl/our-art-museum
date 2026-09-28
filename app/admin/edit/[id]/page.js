@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../supabase";
+
+import { readAdminSession, requireChangedRow, removeNewUploads } from "../../../lib/safety.mjs";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -16,6 +18,8 @@ const ALLOWED_IMAGE_TYPES = [
 export default function AdminArtworkEditPage() {
   const params = useParams();
   const router = useRouter();
+  const [loadError, setLoadError] = useState("");
+  const saveLock = useRef(false);
 
   const artworkId = Array.isArray(params?.id)
     ? params.id[0]
@@ -83,15 +87,9 @@ export default function AdminArtworkEditPage() {
       /*
         관리자 로그인 확인
       */
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        router.replace("/admin/login");
-        return;
-      }
+      setLoadError("");
+      const session = await readAdminSession(supabase);
+      if (!session) { router.replace("/admin/login"); return; }
 
       /*
         작품 정보 불러오기
@@ -120,9 +118,7 @@ export default function AdminArtworkEditPage() {
     } catch (error) {
       console.error(error);
 
-      alert(
-        "수정할 작품을 불러오지 못했습니다."
-      );
+      setLoadError("작품이나 로그인 정보를 불러오지 못했습니다. 입력 내용을 유지하고 다시 확인해 주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -250,62 +246,6 @@ export default function AdminArtworkEditPage() {
   }
 
   /*
-    public URL에서 실제 Storage 경로 추출
-  */
-  function getStoragePath(publicUrl) {
-    if (!publicUrl) {
-      return null;
-    }
-
-    const marker =
-      "/storage/v1/object/public/artworks/";
-
-    const index =
-      publicUrl.indexOf(marker);
-
-    if (index === -1) {
-      return null;
-    }
-
-    const path = publicUrl
-      .slice(index + marker.length)
-      .split("?")[0];
-
-    try {
-      return decodeURIComponent(path);
-    } catch {
-      return path;
-    }
-  }
-
-  /*
-    Storage 이미지 파일 삭제
-  */
-  async function removeFiles(paths) {
-    const cleanPaths = [
-      ...new Set(
-        paths.filter(Boolean)
-      ),
-    ];
-
-    if (cleanPaths.length === 0) {
-      return;
-    }
-
-    const { error } =
-      await supabase.storage
-        .from("artworks")
-        .remove(cleanPaths);
-
-    if (error) {
-      console.error(
-        "Storage 이미지 정리 실패:",
-        error
-      );
-    }
-  }
-
-  /*
     작품 수정 저장
 
     approveAfterSave = false
@@ -317,7 +257,7 @@ export default function AdminArtworkEditPage() {
   async function saveArtwork(
     approveAfterSave = false
   ) {
-    if (!artwork || isSaving) {
+    if (!artwork || saveLock.current) {
       return;
     }
 
@@ -343,15 +283,11 @@ export default function AdminArtworkEditPage() {
 
     /*
       새로 업로드된 이미지
-      → DB 저장 실패 시 삭제하기 위해 보관
+      → DB 요청 전 업로드 실패에 한해서 정리
     */
     const uploadedPaths = [];
-
-    /*
-      교체된 기존 이미지
-      → DB 저장 성공 후 삭제
-    */
-    const oldPaths = [];
+    let mutationSent = false;
+    saveLock.current = true;
 
     try {
       setIsSaving(true);
@@ -379,11 +315,6 @@ export default function AdminArtworkEditPage() {
           result.path
         );
 
-        oldPaths.push(
-          getStoragePath(
-            artwork.original_url
-          )
-        );
 
         originalUrl =
           result.url;
@@ -403,11 +334,6 @@ export default function AdminArtworkEditPage() {
           result.path
         );
 
-        oldPaths.push(
-          getStoragePath(
-            artwork.parody_url
-          )
-        );
 
         parodyUrl =
           result.url;
@@ -427,11 +353,6 @@ export default function AdminArtworkEditPage() {
           result.path
         );
 
-        oldPaths.push(
-          getStoragePath(
-            artwork.ai_url
-          )
-        );
 
         aiUrl =
           result.url;
@@ -476,33 +397,11 @@ export default function AdminArtworkEditPage() {
       /*
         DB 수정
       */
-      const { error } =
-        await supabase
-          .from("artworks")
-          .update(updateData)
-          .eq("id", artwork.id);
-
-      if (error) {
-        /*
-          DB 저장이 실패하면
-          방금 업로드한 새 파일 삭제
-        */
-        await removeFiles(
-          uploadedPaths
-        );
-
-        throw new Error(
-          `작품 저장 실패: ${error.message}`
-        );
-      }
-
-      /*
-        DB 저장 성공 후
-        교체된 기존 이미지 삭제
-      */
-      await removeFiles(
-        oldPaths
-      );
+      mutationSent = true;
+      const { data, error } = await supabase.from("artworks").update(updateData).eq("id", artwork.id).select("id");
+      if (error) throw error;
+      requireChangedRow(data, artwork.id);
+      // Keep prior files: other submissions may still reference them, and they support recovery.
 
       alert(
         approveAfterSave
@@ -516,13 +415,18 @@ export default function AdminArtworkEditPage() {
       router.push("/admin");
     } catch (error) {
       console.error(error);
+      if (!mutationSent) {
+        const cleaned = await removeNewUploads(supabase, uploadedPaths);
+        if (!cleaned) alert("일부 새 이미지 정리에 실패했습니다. 작품 정보는 저장하지 않았습니다.");
+      }
 
       alert(
-        "작품 수정 중 문제가 발생했습니다.\n\n" +
+        (mutationSent ? "저장 결과를 확인하지 못했습니다. 새 이미지와 기존 이미지를 보관했습니다. 목록에서 현재 상태를 확인해 주세요.\n\n" : "이미지 업로드 중 문제가 발생했습니다.\n\n") +
           (error?.message ||
             "잠시 후 다시 시도해 주세요.")
       );
     } finally {
+      saveLock.current = false;
       setIsSaving(false);
     }
   }
@@ -575,6 +479,8 @@ export default function AdminArtworkEditPage() {
   /*
     작품이 없는 경우
   */
+  if (loadError) return <main className="admin-edit-page"><p role="alert">{loadError}</p><button onClick={loadArtwork}>다시 확인</button><Link href="/admin">관리자 페이지</Link></main>;
+
   if (!artwork) {
     return (
       <main className="admin-edit-page">

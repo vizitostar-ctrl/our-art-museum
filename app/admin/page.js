@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabase";
+
+import { readAdminSession, requireChangedRow } from "../lib/safety.mjs";
 
 const PAGE_SIZE = 20;
 
@@ -15,6 +17,10 @@ const STATUS_OPTIONS = [
 
 export default function AdminPage() {
   const router = useRouter();
+  const [connectionError, setConnectionError] = useState("");
+  const [listError, setListError] = useState("");
+  const request = useRef(0);
+  const mutationLock = useRef(false);
 
   const [sessionReady, setSessionReady] = useState(false);
   const [artworks, setArtworks] = useState([]);
@@ -46,6 +52,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     checkSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+      if (event === "SIGNED_OUT") { ++request.current; setSessionReady(false); setArtworks([]); router.replace("/admin/login"); }
+    });
+    return () => { ++request.current; subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -61,17 +71,12 @@ export default function AdminPage() {
   ]);
 
   async function checkSession() {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    if (error || !session) {
-      router.replace("/admin/login");
-      return;
-    }
-
-    setSessionReady(true);
+    setConnectionError("");
+    try {
+      const session = await readAdminSession(supabase);
+      if (!session) { router.replace("/admin/login"); return; }
+      setSessionReady(true);
+    } catch { setConnectionError("로그인 상태를 확인하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요."); }
   }
 
   function applyBaseFilters(query) {
@@ -118,6 +123,8 @@ export default function AdminPage() {
   }
 
   async function loadDashboard() {
+    const current = ++request.current;
+    setListError("");
     try {
       setIsLoading(true);
 
@@ -167,6 +174,7 @@ export default function AdminPage() {
         artworkQuery,
       ]);
 
+      if (current !== request.current) return;
       if (artworkResult.error) {
         throw artworkResult.error;
       }
@@ -194,9 +202,9 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("작품 목록을 불러오지 못했습니다.");
+      if (current === request.current) setListError("작품 목록을 불러오지 못했습니다. 다시 시도해 주세요.");
     } finally {
-      setIsLoading(false);
+      if (current === request.current) setIsLoading(false);
     }
   }
 
@@ -247,153 +255,49 @@ export default function AdminPage() {
   }
 
   async function changeStatus(id, newStatus) {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     try {
       setUpdatingId(id);
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("artworks")
         .update({
           status: newStatus,
         })
-        .eq("id", id);
+        .eq("id", id).select("id");
 
       if (error) {
         throw error;
       }
 
+      requireChangedRow(data, id);
       await loadDashboard();
     } catch (error) {
       console.error(error);
-      alert("작품 상태 변경에 실패했습니다.");
+      alert("상태 변경을 확인하지 못했습니다. 목록을 새로고침하여 현재 상태를 확인해 주세요.");
     } finally {
+      mutationLock.current = false;
       setUpdatingId(null);
     }
   }
-
-  function getArtworkStoragePath(publicUrl) {
-    if (!publicUrl) return null;
-
-    const marker =
-      "/storage/v1/object/public/artworks/";
-
-    const markerIndex =
-      publicUrl.indexOf(marker);
-
-    if (markerIndex === -1) {
-      return null;
-    }
-
-    const path = publicUrl
-      .slice(markerIndex + marker.length)
-      .split("?")[0];
-
-    try {
-      return decodeURIComponent(path);
-    } catch {
-      return path;
-    }
-  }
-
 
   async function deleteArtwork(artwork) {
-    const confirmed = window.confirm(
-      `2학년 ${artwork.class_no}반 ${artwork.student_no}번 작품을 정말 삭제하시겠습니까?\n\n` +
-      "삭제하면 전시 및 관리자 목록에서 제거됩니다.\n" +
-      "삭제 후 학생은 접속코드를 이용해 작품을 다시 제출할 수 있습니다."
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (mutationLock.current) return;
+    if (!window.confirm(`2학년 ${artwork.class_no}반 ${artwork.student_no}번 작품을 삭제할까요?\n작품은 목록에서 제거됩니다. 이미지 파일은 복구를 위해 보관합니다.`)) return;
+    mutationLock.current = true;
     try {
       setUpdatingId(artwork.id);
-
-      /*
-        먼저 삭제할 이미지들의 Storage 경로를 확보합니다.
-      */
-      const storagePaths = [
-        getArtworkStoragePath(
-          artwork.original_url
-        ),
-        getArtworkStoragePath(
-          artwork.parody_url
-        ),
-        getArtworkStoragePath(
-          artwork.ai_url
-        ),
-      ].filter(Boolean);
-
-
-      /*
-        1. artworks 테이블에서 작품 삭제
-      */
-      const { error: deleteError } =
-        await supabase
-          .from("artworks")
-          .delete()
-          .eq("id", artwork.id);
-
-      if (deleteError) {
-        throw new Error(
-          `작품 삭제 실패: ${deleteError.message}`
-        );
-      }
-
-
-      /*
-        2. Storage에 남아 있는 이미지 정리
-
-        DB 삭제는 성공했지만 이미지 삭제가 실패하더라도
-        작품 자체는 이미 정상 삭제된 상태이므로
-        관리자에게만 알려 줍니다.
-      */
-      if (storagePaths.length > 0) {
-        const uniquePaths = [
-          ...new Set(storagePaths),
-        ];
-
-        const { error: storageError } =
-          await supabase.storage
-            .from("artworks")
-            .remove(uniquePaths);
-
-        if (storageError) {
-          console.error(
-            "Storage 이미지 삭제 실패:",
-            storageError
-          );
-
-          alert(
-            "작품은 삭제되었습니다.\n\n" +
-            "다만 일부 이미지 파일 정리에 실패했습니다."
-          );
-        } else {
-          alert(
-            "작품과 이미지가 정상적으로 삭제되었습니다."
-          );
-        }
-      } else {
-        alert(
-          "작품이 정상적으로 삭제되었습니다."
-        );
-      }
-
+      const { data, error } = await supabase.from("artworks").delete().eq("id", artwork.id).select("id");
+      if (error) throw error;
+      requireChangedRow(data, artwork.id);
+      alert("작품을 삭제했습니다. 이미지 파일은 보관됩니다.");
       await loadDashboard();
-
     } catch (error) {
-      console.error(error);
-
-      alert(
-        "작품 삭제 중 문제가 발생했습니다.\n\n" +
-        (error?.message ||
-          "잠시 후 다시 시도해 주세요.")
-      );
-    } finally {
-      setUpdatingId(null);
-    }
+      alert("삭제 완료를 확인하지 못했습니다. 목록을 새로고침하여 현재 상태를 확인해 주세요.");
+    } finally { mutationLock.current = false; setUpdatingId(null); }
   }
-  
+
   async function handleLogout() {
     await supabase.auth.signOut();
     router.replace("/admin/login");
@@ -468,7 +372,8 @@ export default function AdminPage() {
           color: "#6e6255",
         }}
       >
-        로그인 상태를 확인하는 중입니다...
+        <div role="status">{connectionError || "로그인 상태를 확인하는 중입니다…"}
+        {connectionError && <button type="button" onClick={checkSession}>다시 확인</button>}</div>
       </main>
     );
   }
@@ -554,6 +459,7 @@ export default function AdminPage() {
         <nav style={{ marginBottom: 24 }} aria-label="관리자 메뉴">
           <a href="/admin/reactions" style={{ display: "inline-block", padding: "12px 20px", background: "#4b392a", color: "white", borderRadius: 12, textDecoration: "none" }}>감상 반응 종합 보기 →</a>
         </nav>
+        <nav style={{ marginBottom: 24 }}><a href="/admin/exhibition">반별 학생 수 · 대표 썸네일 설정 →</a></nav>
         {/* 상태 요약 */}
         <section
           style={{
@@ -822,7 +728,7 @@ export default function AdminPage() {
         </div>
 
         {/* 작품 목록 */}
-        {isLoading ? (
+        {listError ? <section role="alert">{listError} <button onClick={loadDashboard}>다시 불러오기</button></section> : isLoading ? (
           <section
             style={{
               background: "#fffdfa",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../supabase";
 import styles from "./reactions.module.css";
+import { readAdminSession } from "../../lib/safety.mjs";
 const options = [["heart", "마음에 와닿아요"], ["color", "색채가 인상적이에요"], ["idea", "아이디어가 재미있어요"]];
 export default function ReactionDashboard() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function ReactionDashboard() {
     const current = ++request.current;
     setBusy(true); setError(""); setRows([]);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await readAdminSession(supabase);
       if (!session) { router.replace("/admin/login"); return; }
       const { data, error: failure } = await supabase.rpc("get_admin_reaction_counts_v1");
       if (failure) throw failure;

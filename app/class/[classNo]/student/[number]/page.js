@@ -1,3 +1,4 @@
+import LoadError from "../../../../LoadError";
 import ArtworkReactions from "../../../../ArtworkReactions";
 import gallery from "../../../../Gallery.module.css";
 import Link from "next/link";
@@ -29,19 +30,22 @@ export default async function StudentArtworkPage({ params }) {
     notFound();
   }
 
+  const { data: settings, error: settingsError } = await supabase.rpc("get_exhibition_settings_v1");
+  const config = settings?.find(row => Number(row.class_no) === classNumber);
+  if (settingsError || !config) return <LoadError retryHref={`/class/${classNumber}/student/${studentNumber}`} />;
+  if (studentNumber > config.last_student_no) notFound();
+
   const { data: artwork, error } = await supabase
     .from("artworks")
     .select("*")
     .eq("class_no", classNumber)
     .eq("student_no", studentNumber)
     .eq("status", "approved")
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false }).order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    console.error("작품 불러오기 오류:", error);
-  }
+  if (error) return <LoadError retryHref={`/class/${classNumber}/student/${studentNumber}`} />;
 
   const numberStyle = {
     width: "34px",

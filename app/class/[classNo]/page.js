@@ -1,3 +1,4 @@
+import LoadError from "../../LoadError";
 import gallery from "../../Gallery.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,10 +19,10 @@ export default async function ClassPage({ params }) {
     notFound();
   }
 
-  const students = Array.from(
-    { length: 32 },
-    (_, i) => i + 1
-  );
+  const { data: settings, error: settingsError } = await supabase.rpc("get_exhibition_settings_v1");
+  const config = settings?.find(row => Number(row.class_no) === classNumber);
+  if (settingsError || !config) return <LoadError retryHref={`/class/${classNumber}`} message="학급 설정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." />;
+  const students = Array.from({ length: config.last_student_no }, (_, i) => i + 1);
 
   /*
     현재 반에서 승인된 작품만 가져옵니다.
@@ -38,14 +39,9 @@ export default async function ClassPage({ params }) {
       .eq("status", "approved")
       .order("created_at", {
         ascending: false,
-      });
+      }).order("id", { ascending: false });
 
-  if (error) {
-    console.error(
-      "전시실 작품 불러오기 오류:",
-      error
-    );
-  }
+  if (error) return <LoadError retryHref={`/class/${classNumber}`} />;
 
   /*
     학생 번호별로 가장 최근 승인 작품 1개씩 저장

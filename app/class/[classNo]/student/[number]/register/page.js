@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../../supabase";
 
+import { removeNewUploads } from "../../../../../lib/safety.mjs";
+
 // 학급/학생 번호 유효 범위 (매직넘버 대신 상수로 관리)
 const MIN_CLASS_NUMBER = 1;
 const MAX_CLASS_NUMBER = 10;
@@ -27,6 +29,21 @@ export default function RegisterPage() {
 
   const classNumber = Number(classNo);
   const studentNumber = Number(number);
+
+  const [lastStudent, setLastStudent] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
+  const submitLock = useRef(false);
+  useEffect(() => {
+    let active = true;
+    setLastStudent(null); setSettingsError("");
+    supabase.rpc("get_exhibition_settings_v1").then(({ data, error }) => {
+      if (!active) return;
+      const config = data?.find(row => Number(row.class_no) === classNumber);
+      if (error || !config) setSettingsError("학급 설정을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
+      else setLastStudent(config.last_student_no);
+    }).catch(() => { if (active) setSettingsError("연결을 확인한 뒤 새로고침해 주세요."); });
+    return () => { active = false; };
+  }, [classNumber]);
 
   // 학생 접속 확인
   const [accessCode, setAccessCode] = useState("");
@@ -85,7 +102,8 @@ export default function RegisterPage() {
   const validStudent =
     Number.isInteger(studentNumber) &&
     studentNumber >= MIN_STUDENT_NUMBER &&
-    studentNumber <= MAX_STUDENT_NUMBER;
+    studentNumber <= MAX_STUDENT_NUMBER &&
+    lastStudent !== null && studentNumber <= lastStudent;
 
   const canSubmit =
     accessStatus === "allowed" &&
@@ -287,21 +305,10 @@ export default function RegisterPage() {
   }
 
   // 업로드 중 하나라도 실패하면 이미 올라간 파일들을 정리
-  async function rollbackUploadedFiles(paths) {
-    if (paths.length === 0) return;
-
-    try {
-      await supabase.storage.from("artworks").remove(paths);
-    } catch (cleanupError) {
-      // 롤백 실패는 사용자 흐름을 막지 않고 로그만 남김
-      console.error("업로드 롤백 실패:", cleanupError);
-    }
-  }
-
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (isSubmitting || isSubmitted) return;
+    if (submitLock.current || isSubmitted) return;
 
     if (!validClass) {
       alert("학급 번호를 확인할 수 없습니다.");
@@ -343,6 +350,8 @@ export default function RegisterPage() {
     }
 
     let uploadedPaths = [];
+    let mutationSent = false;
+    submitLock.current = true;
 
     try {
       setIsSubmitting(true);
@@ -371,7 +380,6 @@ export default function RegisterPage() {
       );
 
       if (firstFailure) {
-        await rollbackUploadedFiles(uploadedPaths);
         throw firstFailure.reason;
       }
 
@@ -381,6 +389,7 @@ export default function RegisterPage() {
         직접 insert하지 않고
         안전 제출 함수 submit_artwork를 사용합니다.
       */
+      mutationSent = true;
       const { error: submitError } =
         await supabase.rpc(
           "submit_artwork",
@@ -413,8 +422,7 @@ export default function RegisterPage() {
         );
 
       if (submitError) {
-        // DB 저장 실패 시에도 업로드된 이미지는 정리
-        await rollbackUploadedFiles(uploadedPaths);
+        // 응답 유실 시 DB에는 저장되었을 수 있으므로 이미지를 보관합니다.
 
         throw new Error(
           `작품 정보 저장 실패: ${submitError.message}`
@@ -434,15 +442,18 @@ export default function RegisterPage() {
       );
     } catch (error) {
       console.error(error);
-
-      alert(
-        "작품 등록 중 문제가 발생했습니다.\n\n" +
-          (error?.message || "잠시 후 다시 시도해 주세요.")
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (!mutationSent) {
+        const cleaned = await removeNewUploads(supabase, uploadedPaths);
+        alert("이미지를 업로드하지 못했습니다. 다시 시도해 주세요." + (cleaned ? "" : " 일부 임시 이미지 정리는 선생님의 확인이 필요합니다."));
+      } else {
+        setAccessStatus("idle"); setSubmissionState("");
+        setAccessMessage("저장 결과를 확인하지 못했습니다. 접속코드 확인 버튼으로 제출 상태를 다시 확인해 주세요.");
+        alert("저장 결과를 확인하지 못했습니다. 이미지와 입력 내용은 유지됩니다. 접속코드를 다시 확인해 주세요.");
+      }
+    } finally { submitLock.current = false; setIsSubmitting(false); }
   }
+
+  if (validClass && (lastStudent === null || settingsError)) return <main className="register-page"><p role="status">{settingsError || "학급 설정을 확인하고 있습니다…"}</p>{settingsError && <a href={`/class/${classNumber}/student/${studentNumber}/register`}>다시 불러오기</a>}</main>;
 
   if (!validClass || !validStudent) {
     return (
@@ -581,7 +592,7 @@ export default function RegisterPage() {
                 onChange={handleAccessCodeChange}
                 placeholder="접속코드를 입력하세요"
                 autoComplete="off"
-                disabled={isCheckingAccess}
+                disabled={isCheckingAccess || isSubmitting}
                 style={{
                   flex: "1 1 260px",
                   minWidth: 0,
@@ -599,7 +610,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handleAccessCheck}
-                disabled={isCheckingAccess}
+                disabled={isCheckingAccess || isSubmitting}
                 style={{
                   border: "none",
                   borderRadius: "999px",
