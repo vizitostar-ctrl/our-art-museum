@@ -551,6 +551,9 @@ export default function AdminPage() {
           </button>
         </header>
 
+        <nav style={{ marginBottom: 24 }} aria-label="관리자 메뉴">
+          <a href="/admin/reactions" style={{ display: "inline-block", padding: "12px 20px", background: "#4b392a", color: "white", borderRadius: 12, textDecoration: "none" }}>감상 반응 종합 보기 →</a>
+        </nav>
         {/* 상태 요약 */}
         <section
           style={{
