@@ -460,6 +460,7 @@ export default function AdminPage() {
           <a href="/admin/reactions" style={{ display: "inline-block", padding: "12px 20px", background: "#4b392a", color: "white", borderRadius: 12, textDecoration: "none" }}>감상 반응 종합 보기 →</a>
         </nav>
         <nav style={{ marginBottom: 24 }}><a href="/admin/exhibition">반별 학생 수 · 대표 썸네일 설정 →</a></nav>
+        <nav style={{marginBottom:24}}><a href="/admin/learning">생각 기록 · 감상 글 확인 →</a></nav>
         {/* 상태 요약 */}
         <section
           style={{

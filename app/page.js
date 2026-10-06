@@ -1,3 +1,4 @@
+import PeerEncounter from "./learning/PeerEncounter";
 import Entrance from "./Entrance";
 import LobbyCards from "./LobbyCards";
 import styles from "./Lobby.module.css";
@@ -19,6 +20,7 @@ export default function Home() {
           </div>
           <div className={styles.sectionLabel}><h2>학급 전시실</h2><span>2학년 · 10개의 전시실</span></div>
           <LobbyCards />
+          <PeerEncounter />
           <footer className={styles.footer}>관찰에서 상상으로, 상상에서 새로운 표현으로.</footer>
         </section>
       </main>

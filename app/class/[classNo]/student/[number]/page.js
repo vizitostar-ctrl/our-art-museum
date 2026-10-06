@@ -1,3 +1,5 @@
+import PublicNote from "../../../../learning/PublicNote";
+import Inbox from "../../../../learning/Inbox";
 import LoadError from "../../../../LoadError";
 import ArtworkReactions from "../../../../ArtworkReactions";
 import gallery from "../../../../Gallery.module.css";
@@ -330,10 +332,12 @@ export default async function StudentArtworkPage({ params }) {
               </div>
             </section>
 
+            <PublicNote artworkId={artwork.id} />
             <ArtworkReactions artworkId={artwork.id} />
           </>
         )}
 
+        <Inbox classNo={classNumber} studentNo={studentNumber} />
         {/* 개인정보 안내 */}
         <footer className="student-footer">
           <p>
