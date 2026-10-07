@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../../supabase";
 
-import Studio from "../../../../../learning/Studio";
 import { removeNewUploads } from "../../../../../lib/safety.mjs";
 
 // 학급/학생 번호 유효 범위 (매직넘버 대신 상수로 관리)
@@ -34,8 +33,6 @@ export default function RegisterPage() {
   const [lastStudent, setLastStudent] = useState(null);
   const [settingsError, setSettingsError] = useState("");
   const submitLock = useRef(false);
-  const [learning,setLearning]=useState(null);
-  const [studioBusy,setStudioBusy]=useState(false);
   useEffect(() => {
     let active = true;
     setLastStudent(null); setSettingsError("");
@@ -68,6 +65,7 @@ export default function RegisterPage() {
   const [originalFeature, setOriginalFeature] = useState("");
   const [expressionIntent, setExpressionIntent] = useState("");
   const [aiFeature, setAiFeature] = useState("");
+  const [aiReflection, setAiReflection] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -117,7 +115,6 @@ export default function RegisterPage() {
 
   function handleAccessCodeChange(event) {
     setAccessCode(event.target.value);
-    setLearning(null);setStudioBusy(false);
 
     // 접속코드를 다시 입력하면 이전 확인 결과는 취소
     setAccessStatus("idle");
@@ -342,10 +339,16 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!learning?.payload?.confirmed || !learning.payload.reflection.match || !learning.payload.reflection.evidence.trim() || !learning.payload.reflection.next.trim() || !learning.payload.publicNote.trim()) {
-      alert("내 생각 확인과 변환 후 성찰, 공개할 발견을 작성해 주세요."); return;
+    if (
+      !originalFeature.trim() ||
+      !expressionIntent.trim() ||
+      !aiFeature.trim()
+    ) {
+      alert(
+        "작품 이야기 세 항목을 모두 작성해 주세요."
+      );
+      return;
     }
-    if(studioBusy) return;
 
     let uploadedPaths = [];
     let mutationSent = false;
@@ -388,13 +391,37 @@ export default function RegisterPage() {
         안전 제출 함수 submit_artwork를 사용합니다.
       */
       mutationSent = true;
-      const { error: submitError } = await supabase.rpc("submit_artwork_learning_v1", {
-        p_class_no:classNumber,p_student_no:studentNumber,p_access_code:accessCode.trim(),
-        p_original_url:originalResult.url,p_parody_url:parodyResult.url,p_ai_url:aiResult.url,
-        p_feature:learning.payload.summary.observation,p_intent:learning.payload.summary.intent,
-        p_prompt_text:`유지: ${learning.payload.summary.keep}\n표현: ${learning.payload.summary.change}`,
-        p_payload:learning.payload,p_version:learning.version,
-      });
+      const { error: submitError } =
+        await supabase.rpc(
+          "submit_artwork_reflection_v1",
+          {
+            p_class_no: classNumber,
+            p_student_no: studentNumber,
+            p_access_code: accessCode.trim(),
+
+            p_display_name:
+              `2-${classNumber} ${studentNumber}번`,
+
+            p_title:
+              `2학년 ${classNumber}반 ${studentNumber}번 작품`,
+
+            p_original_title: "",
+
+            p_original_url: originalResult.url,
+            p_parody_url: parodyResult.url,
+            p_ai_url: aiResult.url,
+
+            p_feature:
+              originalFeature.trim(),
+
+            p_intent:
+              expressionIntent.trim(),
+
+            p_prompt_text:
+              aiFeature.trim(),
+            p_ai_reflection: aiReflection.trim(),
+          }
+        );
 
       if (submitError) {
         // 응답 유실 시 DB에는 저장되었을 수 있으므로 이미지를 보관합니다.
@@ -685,7 +712,6 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
-                      disabled={isSubmitting || studioBusy}
                       onChange={(event) =>
                         previewImage(
                           event,
@@ -732,7 +758,6 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
-                      disabled={isSubmitting || studioBusy}
                       onChange={(event) =>
                         previewImage(
                           event,
@@ -780,7 +805,6 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
-                      disabled={isSubmitting || studioBusy}
                       onChange={(event) =>
                         previewImage(
                           event,
@@ -802,7 +826,141 @@ export default function RegisterPage() {
               </div>
             </section>
 
-            <Studio key={`${classNumber}:${studentNumber}:${accessCode}`} identity={{classNo:classNumber,studentNo:studentNumber,accessCode:accessCode.trim()}} parodyFile={parodyFile} aiImage={aiImage} onChange={setLearning} onBusy={setStudioBusy} disabled={isSubmitting} onGenerated={file=>{setAiFile(file);setAiImage(current=>{if(current)URL.revokeObjectURL(current);return URL.createObjectURL(file);});}} />
+            {/* ======================================
+                STEP 02 작품 이야기
+                ====================================== */}
+            <section className="register-section">
+
+              <div className="register-section-title">
+                <span>STEP 02</span>
+
+                <h2>작품 이야기 작성</h2>
+
+                <p>
+                  작품을 만들면서 관찰하고 생각한 내용을
+                  자신의 말로 작성해 주세요.
+                </p>
+              </div>
+
+              <div className="writing-grid">
+
+                <article className="writing-card">
+
+                  <span className="writing-number">
+                    01
+                  </span>
+
+                  <label htmlFor="originalFeature">
+                    원작에서 발견한 특징
+                  </label>
+
+                  <p>
+                    원작의 색채, 붓질, 질감,
+                    화면 구성 등에서 발견한 특징을
+                    작성해 주세요.
+                  </p>
+
+                  <textarea
+                    id="originalFeature"
+                    value={originalFeature}
+                    onChange={(event) =>
+                      setOriginalFeature(
+                        event.target.value
+                      )
+                    }
+                    maxLength={300}
+                    placeholder="예: 밝은 색과 어두운 색의 대비가 강하고, 짧고 반복적인 붓질이 보였습니다."
+                  />
+
+                  <span className="character-count">
+                    {originalFeature.length} / 300
+                  </span>
+
+                </article>
+
+                <article className="writing-card">
+
+                  <span className="writing-number">
+                    02
+                  </span>
+
+                  <label htmlFor="expressionIntent">
+                    나의 표현 의도
+                  </label>
+
+                  <p>
+                    패러디하면서 무엇을 바꾸었고,
+                    어떤 생각을 표현했는지 작성해 주세요.
+                  </p>
+
+                  <textarea
+                    id="expressionIntent"
+                    value={expressionIntent}
+                    onChange={(event) =>
+                      setExpressionIntent(
+                        event.target.value
+                      )
+                    }
+                    maxLength={300}
+                    placeholder="예: 원작의 인물은 유지하면서 배경을 학교생활과 관련된 장면으로 바꾸었습니다."
+                  />
+
+                  <span className="character-count">
+                    {expressionIntent.length} / 300
+                  </span>
+
+                </article>
+
+                <article className="writing-card">
+
+                  <span className="writing-number">
+                    03
+                  </span>
+
+                  <label htmlFor="aiFeature">
+                    AI에게 전달한 표현 특징
+                  </label>
+
+                  <p>
+                    AI 이미지 제작을 위해 전달한
+                    색채, 붓질, 질감 등의 표현 특징을
+                    작성해 주세요.
+                  </p>
+
+                  <textarea
+                    id="aiFeature"
+                    value={aiFeature}
+                    onChange={(event) =>
+                      setAiFeature(
+                        event.target.value
+                      )
+                    }
+                    maxLength={500}
+                    placeholder="예: 선명한 색의 대비, 짧게 반복되는 붓질, 두껍고 거친 질감이 느껴지도록 표현해 주세요."
+                  />
+
+                  <span className="character-count">
+                    {aiFeature.length} / 500
+                  </span>
+
+                </article>
+
+                <article className="writing-card" style={{ gridColumn: "1 / -1" }}>
+                  <span className="writing-number">04</span>
+                  <label htmlFor="aiReflection">AI 변환 후 느낀 점</label>
+                  <p>AI가 변환한 작품과 내가 직접 그린 작품을 비교하고, 느낀 점을 작성해 주세요.</p>
+                  <textarea
+                    id="aiReflection"
+                    value={aiReflection}
+                    onChange={(event) => setAiReflection(event.target.value)}
+                    maxLength={500}
+                    placeholder="예: AI가 원작의 거친 붓질을 잘 표현했지만, 인물의 표정은 내가 의도한 것보다 밝게 바뀌었습니다. 내가 직접 그린 그림의 익살스러운 표정이 더 마음에 듭니다."
+                  />
+                  <span className="character-count">{aiReflection.length} / 500</span>
+                </article>
+
+              </div>
+            </section>
 
             {/* ======================================
                 최종 제출
@@ -831,7 +989,7 @@ export default function RegisterPage() {
                 type="submit"
                 className="submit-artwork-button"
                 disabled={
-                  isSubmitting || studioBusy || !learning ||
+                  isSubmitting ||
                   isSubmitted
                 }
               >
