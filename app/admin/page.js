@@ -459,6 +459,7 @@ export default function AdminPage() {
         <nav style={{ marginBottom: 24 }} aria-label="관리자 메뉴">
           <a href="/admin/reactions" style={{ display: "inline-block", padding: "12px 20px", background: "#4b392a", color: "white", borderRadius: 12, textDecoration: "none" }}>감상 반응 종합 보기 →</a>
         </nav>
+        <nav style={{ marginBottom: 24 }}><a href="/admin/password">내 비밀번호 변경 →</a></nav>
         <nav style={{ marginBottom: 24 }}><a href="/admin/exhibition">반별 학생 수 · 대표 썸네일 설정 →</a></nav>
         {/* 상태 요약 */}
         <section
