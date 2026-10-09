@@ -1,5 +1,3 @@
-import PublicNote from "../../../../learning/PublicNote";
-import Inbox from "../../../../learning/Inbox";
 import LoadError from "../../../../LoadError";
 import ArtworkReactions from "../../../../ArtworkReactions";
 import gallery from "../../../../Gallery.module.css";
@@ -329,15 +327,20 @@ export default async function StudentArtworkPage({ params }) {
                   </p>
                 </article>
 
+                {artwork.ai_reflection?.trim() && (
+                  <article className="note-card" style={{ gridColumn: "1 / -1" }}>
+                    <span className="note-number">04</span>
+                    <h3>AI 변환 후 느낀 점</h3>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{artwork.ai_reflection}</p>
+                  </article>
+                )}
               </div>
             </section>
 
-            <PublicNote artworkId={artwork.id} />
             <ArtworkReactions artworkId={artwork.id} />
           </>
         )}
 
-        <Inbox classNo={classNumber} studentNo={studentNumber} />
         {/* 개인정보 안내 */}
         <footer className="student-footer">
           <p>

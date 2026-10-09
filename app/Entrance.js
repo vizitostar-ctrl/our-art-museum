@@ -36,10 +36,7 @@ export default function Entrance({ children }) {
   }, []);
 
   useEffect(() => {
-    if (phase === "entered") {
-      window.dispatchEvent(new Event("museum:entered"));
-      return;
-    }
+    if (phase === "entered") return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
