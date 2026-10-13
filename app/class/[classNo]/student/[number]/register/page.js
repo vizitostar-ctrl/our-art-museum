@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../../supabase";
 
+import { compressArtworkImage, MAX_STORED_IMAGE_BYTES } from "../../../../../lib/compress-image.mjs";
+
 import { removeNewUploads } from "../../../../../lib/safety.mjs";
 
 // 학급/학생 번호 유효 범위 (매직넘버 대신 상수로 관리)
@@ -33,6 +35,8 @@ export default function RegisterPage() {
   const [lastStudent, setLastStudent] = useState(null);
   const [settingsError, setSettingsError] = useState("");
   const submitLock = useRef(false);
+  const compressionLock = useRef(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   useEffect(() => {
     let active = true;
     setLastStudent(null); setSettingsError("");
@@ -214,12 +218,14 @@ export default function RegisterPage() {
     }
   }
 
-  function previewImage(
+  async function previewImage(
     event,
     fileSetter,
     previewSetter
   ) {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
+    if (compressionLock.current || submitLock.current) return;
 
     if (!file) return;
 
@@ -239,15 +245,22 @@ export default function RegisterPage() {
       return;
     }
 
-    fileSetter(file);
-
-    previewSetter((currentImage) => {
-      if (currentImage) {
-        URL.revokeObjectURL(currentImage);
-      }
-
-      return URL.createObjectURL(file);
-    });
+    compressionLock.current = true;
+    setIsCompressing(true);
+    try {
+      const compressed = await compressArtworkImage(file);
+      fileSetter(compressed);
+      previewSetter((currentImage) => {
+        if (currentImage) URL.revokeObjectURL(currentImage);
+        return URL.createObjectURL(compressed);
+      });
+    } catch (error) {
+      input.value = "";
+      alert(error.message || "사진 압축에 실패했습니다. 다시 선택해 주세요.");
+    } finally {
+      compressionLock.current = false;
+      setIsCompressing(false);
+    }
   }
 
   function getFileExtension(file) {
@@ -277,6 +290,9 @@ export default function RegisterPage() {
     file,
     imageType
   ) {
+    if (!file || file.size > MAX_STORED_IMAGE_BYTES || file.size === 0) {
+      throw new Error("사진은 1MB 이하만 저장할 수 있습니다.");
+    }
     const extension = getFileExtension(file);
 
     const filePath =
@@ -309,7 +325,7 @@ export default function RegisterPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (submitLock.current || isSubmitted) return;
+    if (submitLock.current || compressionLock.current || isSubmitted) return;
 
     if (!validClass) {
       alert("학급 번호를 확인할 수 없습니다.");
@@ -677,10 +693,11 @@ export default function RegisterPage() {
                 <p>
                   가로·세로 작품 모두 등록할 수 있습니다.
                   작품 전체가 잘 보이도록 촬영한 사진을
-                  선택해 주세요.
+                  선택해 주세요. JPG·PNG·WebP, 원본은 장당 5MB까지 선택할 수 있으며 저장 전 1MB 이하로 자동 압축됩니다.
                 </p>
               </div>
 
+              <p role="status">{isCompressing ? "사진을 1MB 이하로 준비하고 있습니다…" : "선택한 사진의 미리보기를 확인해 주세요."}</p>
               <div className="upload-grid">
 
                 <article className="upload-card">
@@ -710,6 +727,7 @@ export default function RegisterPage() {
                     )}
 
                     <input
+                      disabled={isCompressing || isSubmitting || isSubmitted}
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       onChange={(event) =>
@@ -756,6 +774,7 @@ export default function RegisterPage() {
                     )}
 
                     <input
+                      disabled={isCompressing || isSubmitting || isSubmitted}
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       onChange={(event) =>
@@ -803,6 +822,7 @@ export default function RegisterPage() {
                     )}
 
                     <input
+                      disabled={isCompressing || isSubmitting || isSubmitted}
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       onChange={(event) =>
@@ -989,6 +1009,7 @@ export default function RegisterPage() {
                 type="submit"
                 className="submit-artwork-button"
                 disabled={
+                  isCompressing ||
                   isSubmitting ||
                   isSubmitted
                 }
