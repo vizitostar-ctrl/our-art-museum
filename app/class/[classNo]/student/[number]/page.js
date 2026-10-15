@@ -338,6 +338,15 @@ export default async function StudentArtworkPage({ params }) {
             </section>
 
             <ArtworkReactions artworkId={artwork.id} />
+            {process.env.NEXT_PUBLIC_ARTWORK_COMMENTS_ENABLED === "true" && <section className="artist-note">
+              <h2>작품으로 나누는 이야기</h2>
+              <p>다른 반 친구의 표현을 살펴보고 생각을 전해 보세요. 감상평은 선생님 확인 후 작품을 만든 친구만 볼 수 있습니다.</p>
+              <nav style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+                <Link className="backButton" href={`/comments?mode=write&artwork=${artwork.id}`}>감상평 남기기</Link>
+                <Link className="backButton" href={`/comments?mode=received&artwork=${artwork.id}`}>친구들이 남긴 감상평</Link>
+                <Link className="backButton" href="/comments?mode=mine">내가 쓴 감상평</Link>
+              </nav>
+            </section>}
           </>
         )}
 
