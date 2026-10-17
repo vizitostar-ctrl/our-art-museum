@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../../supabase";
 
-import { removeNewUploads } from "../../../../../lib/safety.mjs";
-
 // 학급/학생 번호 유효 범위 (매직넘버 대신 상수로 관리)
 const MIN_CLASS_NUMBER = 1;
 const MAX_CLASS_NUMBER = 10;
@@ -20,6 +18,7 @@ const ALLOWED_IMAGE_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const IMAGE_LABELS = {original:"원작",parody:"나의 패러디",ai:"AI 재해석"};
 
 export default function RegisterPage() {
   const params = useParams();
@@ -33,6 +32,7 @@ export default function RegisterPage() {
   const [lastStudent, setLastStudent] = useState(null);
   const [settingsError, setSettingsError] = useState("");
   const submitLock = useRef(false);
+  const uploadedFilesRef = useRef({}); // Uploads already confirmed during this page visit.
   useEffect(() => {
     let active = true;
     setLastStudent(null); setSettingsError("");
@@ -69,31 +69,14 @@ export default function RegisterPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [previewErrors, setPreviewErrors] = useState({});
 
-  // 언마운트 시점에도 최신 미리보기 URL을 참조하기 위한 ref
-  // (아래 useEffect cleanup에서 사용)
-  const previewUrlsRef = useRef({
-    original: null,
-    parody: null,
-    ai: null,
-  });
-
-  useEffect(() => {
-    previewUrlsRef.current = {
-      original: originalImage,
-      parody: parodyImage,
-      ai: aiImage,
-    };
-  }, [originalImage, parodyImage, aiImage]);
-
-  // 컴포넌트 언마운트 시 남아있는 object URL 전부 해제 (메모리 누수 방지)
-  useEffect(() => {
-    return () => {
-      Object.values(previewUrlsRef.current).forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
-      });
-    };
-  }, []);
+  // Release old preview URLs after React replaces their images, not in setState.
+  const previewUrlsRef = useRef({original:null,parody:null,ai:null});
+  useEffect(() => () => { if (originalImage) URL.revokeObjectURL(originalImage); },[originalImage]);
+  useEffect(() => () => { if (parodyImage) URL.revokeObjectURL(parodyImage); },[parodyImage]);
+  useEffect(() => () => { if (aiImage) URL.revokeObjectURL(aiImage); },[aiImage]);
 
   const validClass =
     Number.isInteger(classNumber) &&
@@ -214,40 +197,38 @@ export default function RegisterPage() {
     }
   }
 
-  function previewImage(
-    event,
-    fileSetter,
-    previewSetter
-  ) {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      alert(
-        "JPG, PNG, WebP 형식의 이미지만 등록할 수 있습니다."
-      );
-      event.target.value = "";
+  function previewImage(event,fileSetter,previewSetter,imageType) {
+    const file=event.target.files?.[0];
+    if(!file || submitLock.current) return;
+    event.target.value=""; // Same photo may be selected again after an error.
+    if(!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      alert("JPG, PNG, WebP 형식의 이미지만 등록할 수 있습니다.");
       return;
     }
-
-    if (file.size > MAX_FILE_SIZE) {
-      alert(
-        "이미지 한 장의 용량은 5MB 이하로 등록해 주세요."
-      );
-      event.target.value = "";
+    if(file.size===0 || file.size>MAX_FILE_SIZE) {
+      alert("사진 한 장은 0바이트보다 크고 5MB 이하여야 합니다.");
       return;
     }
+    try {
+      const url=URL.createObjectURL(file);
+      previewUrlsRef.current[imageType]=url;
+      uploadedFilesRef.current[imageType]=null;
+      fileSetter(file);
+      previewSetter(url);
+      setPreviewErrors(old=>({...old,[imageType]:""}));
+    } catch(error) {
+      console.error("미리보기 생성 오류",imageType,error);
+      setPreviewErrors(old=>({...old,[imageType]:"사진을 표시할 수 없습니다. 다른 JPG 사진으로 다시 선택해 주세요."}));
+    }
+  }
 
-    fileSetter(file);
-
-    previewSetter((currentImage) => {
-      if (currentImage) {
-        URL.revokeObjectURL(currentImage);
-      }
-
-      return URL.createObjectURL(file);
-    });
+  function handlePreviewError(imageType,url,fileSetter,previewSetter) {
+    if(previewUrlsRef.current[imageType]!==url) return;
+    previewUrlsRef.current[imageType]=null;
+    uploadedFilesRef.current[imageType]=null;
+    fileSetter(null);
+    previewSetter(null);
+    setPreviewErrors(old=>({...old,[imageType]:"사진 미리보기에 실패했습니다. 다른 JPG 사진을 선택해 주세요."}));
   }
 
   function getFileExtension(file) {
@@ -271,12 +252,13 @@ export default function RegisterPage() {
       .slice(2)}`;
   }
 
-  // path와 publicUrl을 함께 반환하도록 변경
-  // (실패 시 롤백에는 path가 필요하고, DB 저장에는 publicUrl이 필요하기 때문)
+  // Preserve successful uploads to enable retry without resending files.
   async function uploadArtworkImage(
     file,
     imageType
   ) {
+    if(!file || file.size===0 || file.size>MAX_FILE_SIZE || !ALLOWED_IMAGE_TYPES.includes(file.type))
+      throw new Error(IMAGE_LABELS[imageType]+" 사진의 형식과 용량을 확인해 주세요.");
     const extension = getFileExtension(file);
 
     const filePath =
@@ -293,9 +275,8 @@ export default function RegisterPage() {
         });
 
     if (uploadError) {
-      throw new Error(
-        `${imageType} 이미지 업로드 실패: ${uploadError.message}`
-      );
+      console.error("이미지 전송 실패",{imageType,statusCode:uploadError.statusCode,message:uploadError.message});
+      throw new Error(IMAGE_LABELS[imageType]+" 이미지 전송 실패. 연결 상태와 사진을 확인해 주세요.");
     }
 
     const { data } = supabase.storage
@@ -305,7 +286,7 @@ export default function RegisterPage() {
     return { path: filePath, url: data.publicUrl };
   }
 
-  // 업로드 중 하나라도 실패하면 이미 올라간 파일들을 정리
+  // Sequential uploads: keep confirmed files available for retry.
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -350,41 +331,24 @@ export default function RegisterPage() {
       return;
     }
 
-    let uploadedPaths = [];
     let mutationSent = false;
     submitLock.current = true;
 
     try {
       setIsSubmitting(true);
 
-      /*
-        접속코드 확인과 제출 가능 상태 확인이 끝난 뒤에만
-        실제 이미지 업로드를 시작합니다.
-
-        세 이미지를 병렬로 업로드하고, 하나라도 실패하면
-        이미 성공한 업로드는 storage에서 정리(rollback)합니다.
-      */
-      const results = await Promise.allSettled([
-        uploadArtworkImage(originalFile, "original"),
-        uploadArtworkImage(parodyFile, "parody"),
-        uploadArtworkImage(aiFile, "ai"),
-      ]);
-
-      const succeeded = results
-        .filter((r) => r.status === "fulfilled")
-        .map((r) => r.value);
-
-      uploadedPaths = succeeded.map((r) => r.path);
-
-      const firstFailure = results.find(
-        (r) => r.status === "rejected"
-      );
-
-      if (firstFailure) {
-        throw firstFailure.reason;
+      // Send images sequentially. Reuse files confirmed by Storage on retry.
+      const uploaded={};
+      for(const [imageType,file] of [["original",originalFile],["parody",parodyFile],["ai",aiFile]]) {
+        const cached=uploadedFilesRef.current[imageType];
+        if(cached?.file===file) { uploaded[imageType]=cached.result; continue; }
+        setUploadProgress(IMAGE_LABELS[imageType]+" 사진을 전송 중입니다…");
+        const result=await uploadArtworkImage(file,imageType);
+        uploadedFilesRef.current[imageType]={file,result};
+        uploaded[imageType]=result;
       }
-
-      const [originalResult, parodyResult, aiResult] = succeeded;
+      const originalResult=uploaded.original,parodyResult=uploaded.parody,aiResult=uploaded.ai;
+      setUploadProgress("사진 전송 완료. 작품 정보를 저장하는 중입니다…");
 
       /*
         직접 insert하지 않고
@@ -431,6 +395,7 @@ export default function RegisterPage() {
         );
       }
 
+      setUploadProgress("");
       setIsSubmitted(true);
       setSubmissionState("pending");
       setAccessStatus("blocked");
@@ -445,14 +410,16 @@ export default function RegisterPage() {
     } catch (error) {
       console.error(error);
       if (!mutationSent) {
-        const cleaned = await removeNewUploads(supabase, uploadedPaths);
-        alert("이미지를 업로드하지 못했습니다. 다시 시도해 주세요." + (cleaned ? "" : " 일부 임시 이미지 정리는 선생님의 확인이 필요합니다."));
+        // Student codes do not grant Supabase Auth DELETE; never attempt to delete uploaded files.
+        alert((error?.message||"이미지 업로드 실패")+
+          "\n성공한 사진은 이 화면에 보관됩니다. 새로고침하지 말고 다시 등록해 주세요."+
+          "\n임시 이미지는 자동으로 삭제하지 않습니다.");
       } else {
         setAccessStatus("idle"); setSubmissionState("");
         setAccessMessage("저장 결과를 확인하지 못했습니다. 접속코드 확인 버튼으로 제출 상태를 다시 확인해 주세요.");
         alert("저장 결과를 확인하지 못했습니다. 이미지와 입력 내용은 유지됩니다. 접속코드를 다시 확인해 주세요.");
       }
-    } finally { submitLock.current = false; setIsSubmitting(false); }
+    } finally { submitLock.current = false; setIsSubmitting(false); setUploadProgress(''); }
   }
 
   if (validClass && (lastStudent === null || settingsError)) return <main className="register-page"><p role="status">{settingsError || "학급 설정을 확인하고 있습니다…"}</p>{settingsError && <a href={`/class/${classNumber}/student/${studentNumber}/register`}>다시 불러오기</a>}</main>;
@@ -681,6 +648,7 @@ export default function RegisterPage() {
                 </p>
               </div>
 
+              <p role="status">{uploadProgress}</p>
               <div className="upload-grid">
 
                 <article className="upload-card">
@@ -697,6 +665,7 @@ export default function RegisterPage() {
                         src={originalImage}
                         alt="원작 미리보기"
                         className="upload-preview"
+                        onError={() => handlePreviewError("original",originalImage,setOriginalFile,setOriginalImage)}
                       />
                     ) : (
                       <div className="upload-empty">
@@ -712,11 +681,13 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      disabled={isSubmitting || isSubmitted}
                       onChange={(event) =>
                         previewImage(
                           event,
                           setOriginalFile,
-                          setOriginalImage
+                          setOriginalImage,
+                          "original"
                         )
                       }
                     />
@@ -726,6 +697,7 @@ export default function RegisterPage() {
                   <p className="upload-help">
                     원작 이미지를 등록해 주세요.
                   </p>
+                  {previewErrors.original && <p role="alert" className="upload-help">{previewErrors.original}</p>}
 
                 </article>
 
@@ -743,6 +715,7 @@ export default function RegisterPage() {
                         src={parodyImage}
                         alt="패러디 작품 미리보기"
                         className="upload-preview"
+                        onError={() => handlePreviewError("parody",parodyImage,setParodyFile,setParodyImage)}
                       />
                     ) : (
                       <div className="upload-empty">
@@ -758,11 +731,13 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      disabled={isSubmitting || isSubmitted}
                       onChange={(event) =>
                         previewImage(
                           event,
                           setParodyFile,
-                          setParodyImage
+                          setParodyImage,
+                          "parody"
                         )
                       }
                     />
@@ -773,6 +748,7 @@ export default function RegisterPage() {
                     직접 제작한 패러디 작품을
                     등록해 주세요.
                   </p>
+                  {previewErrors.parody && <p role="alert" className="upload-help">{previewErrors.parody}</p>}
 
                 </article>
 
@@ -790,6 +766,7 @@ export default function RegisterPage() {
                         src={aiImage}
                         alt="AI 재해석 작품 미리보기"
                         className="upload-preview"
+                        onError={() => handlePreviewError("ai",aiImage,setAiFile,setAiImage)}
                       />
                     ) : (
                       <div className="upload-empty">
@@ -805,11 +782,13 @@ export default function RegisterPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      disabled={isSubmitting || isSubmitted}
                       onChange={(event) =>
                         previewImage(
                           event,
                           setAiFile,
-                          setAiImage
+                          setAiImage,
+                          "ai"
                         )
                       }
                     />
@@ -820,6 +799,7 @@ export default function RegisterPage() {
                     AI를 활용해 재해석한 이미지를
                     등록해 주세요.
                   </p>
+                  {previewErrors.ai && <p role="alert" className="upload-help">{previewErrors.ai}</p>}
 
                 </article>
 
