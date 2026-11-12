@@ -283,19 +283,48 @@ export default function RegisterPage() {
       `class-${classNumber}/student-${studentNumber}/` +
       `${Date.now()}-${makeUniqueId()}-${imageType}.${extension}`;
 
-    const { error: uploadError } =
-      await supabase.storage
-        .from("artworks")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type,
-        });
-
-    if (uploadError) {
-      throw new Error(
-        `${imageType} 이미지 업로드 실패: ${uploadError.message}`
-      );
+    try {
+      const { error: uploadError } =
+        await supabase.storage
+          .from("artworks")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: file.type,
+          });
+      if (uploadError) throw uploadError;
+    } catch (uploadError) {
+      // Never log the raw error/request, file name, path, or credentials.
+      const redact = value => {
+        let text = typeof value === "string" ? value : "";
+        for (const sensitive of [accessCode.trim(), file.name, filePath,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY]) {
+          if (sensitive) text = text.split(sensitive).join("[redacted]");
+        }
+        return text
+          .replace(/https?:\/\/[^\s"'<>]+/gi, "[url]")
+          .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+          .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[token]")
+          .replace(/((?:authorization|cookie|password|access[_-]?code|api[_-]?key|token|secret)\s*[:=]\s*).*/gi, "$1[redacted]")
+          .slice(0, 500);
+      };
+      // Only retain numeric HTTP-like status values, never arbitrary objects.
+      const statusValue = value => /^(?:0|[1-5][0-9]{2})$/.test(String(value ?? "")) ? Number(value) : null;
+      const status = statusValue(uploadError?.status);
+      const statusCode = statusValue(uploadError?.statusCode);
+      const message = redact(uploadError?.message || (typeof uploadError === "string" ? uploadError : ""));
+      const name = redact(uploadError?.name);
+      const httpStatus = [statusCode, status].find(value => value >= 400);
+      // Missing status alone is not evidence of a network failure.
+      const networkLike = /failed to fetch|fetch failed|network(?:error| request failed| error)|load failed|networkerror/i.test(message + " " + name);
+      const code = `${imageType.toUpperCase()}-${httpStatus || (networkLike ? "NETWORK" : "UNKNOWN")}`;
+      const diagnostic = { stage: "Storage upload", type: imageType,
+        mime: file.type, size: file.size, message, status, statusCode, name, code };
+      console.error("[Artwork Upload Error]", diagnostic);
+      // Preserve the useful fields for the outer catch without retaining request data.
+      const error = new Error(message || "Storage upload failed");
+      Object.assign(error, { imageType, status, statusCode, uploadDiagnostic: diagnostic });
+      throw error;
     }
 
     const { data } = supabase.storage
@@ -376,6 +405,7 @@ export default function RegisterPage() {
 
       uploadedPaths = succeeded.map((r) => r.path);
 
+      // Representative error: original, then parody, then ai (input order, not completion time).
       const firstFailure = results.find(
         (r) => r.status === "rejected"
       );
@@ -443,10 +473,10 @@ export default function RegisterPage() {
         "작품이 정상적으로 제출되었습니다.\n\n선생님의 확인 후 온라인 미술관에 전시됩니다."
       );
     } catch (error) {
-      console.error(error);
+      if (!error?.uploadDiagnostic) console.error(error);
       if (!mutationSent) {
         const cleaned = await removeNewUploads(supabase, uploadedPaths);
-        alert("이미지를 업로드하지 못했습니다. 다시 시도해 주세요." + (cleaned ? "" : " 일부 임시 이미지 정리는 선생님의 확인이 필요합니다."));
+        alert("이미지를 업로드하지 못했습니다. 다시 시도해 주세요." + (error?.uploadDiagnostic ? ` (오류코드: ${error.uploadDiagnostic.code})` : "") + (cleaned ? "" : " 일부 임시 이미지 정리는 선생님의 확인이 필요합니다."));
       } else {
         setAccessStatus("idle"); setSubmissionState("");
         setAccessMessage("저장 결과를 확인하지 못했습니다. 접속코드 확인 버튼으로 제출 상태를 다시 확인해 주세요.");
