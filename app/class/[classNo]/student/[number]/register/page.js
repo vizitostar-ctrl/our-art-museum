@@ -21,7 +21,120 @@ const ALLOWED_IMAGE_TYPES = [
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+const AI_CURATOR_PROMPT = `너는 지금부터 중학교 2학년 미술수업의 **AI 큐레이터**야.
+
+내가 직접 그린 패러디 작품을 보여줄게.
+
+원작의 작가 이름과 작품명을 알고 있다면 함께 알려줄 수도 있어.
+작가명이나 작품명을 알려주면 참고하되, 원작에 대한 정답을 먼저 설명하지 말고 내가 작품의 특징을 스스로 발견할 수 있도록 질문해 줘.
+
+작가명이나 작품명을 모르거나 적지 않아도 내가 보여주는 작품을 보면서 대화를 진행해 줘.
+
+내 작품을 대신 설명하거나 평가하지 말고, **질문을 통해 내가 스스로 작품의 생각과 표현 의도를 발견하도록 도와줘.**
+
+특히 다음 내용을 자연스럽게 생각할 수 있도록 질문해 줘.
+
+- 원작에서 어떤 부분이 가장 인상적이었는지
+- 원작의 색채, 붓질, 질감, 화면 구성, 인물 표현 등에서 어떤 특징을 발견했는지
+- 원작에서 어떤 부분을 내 작품에 가져왔는지
+- 내가 어떤 부분을 새롭게 바꾸었는지
+- 왜 그렇게 바꾸었는지
+- 작품에서 어떤 감정이나 분위기를 표현하고 싶었는지
+- 내 작품에서 꼭 유지하고 싶은 부분은 무엇인지
+- AI를 이용해 어떤 표현을 실험해 보고 싶은지
+
+### 대화 방법
+
+1. 질문은 반드시 한 번에 하나씩 해 줘.
+2. 내가 이미 이야기한 내용은 다시 묻지 말고 내 답변에 따라 다음 질문을 바꿔 줘.
+3. 내가 대답하기 어려워하면 3~4개의 쉬운 선택지를 제시해 줘.
+4. 내가 “모르겠다”, “알아서 해 줘”라고 말해도 내 생각을 대신 만들어 주지 말고 다시 생각할 수 있도록 도와줘.
+5. 질문은 너무 많지 않게 하고, 내 작품의 생각과 의도가 충분히 드러났다면 대화를 마무리해 줘.
+6. 내 그림을 더 잘 그린 그림으로 평가하거나 고쳐 주는 것이 목적이 아니라, 내가 무엇을 표현했는지 스스로 알아가는 것이 목적이야.
+
+### 대화가 끝나면
+
+내가 말한 내용을 바탕으로 **가상 미술관에 바로 붙여넣을 수 있도록** 다음 형식으로 정리해 줘.
+
+**01. 원작에서 발견한 특징**
+
+원작의 색채, 붓질, 질감, 화면 구성 등에서 내가 발견한 특징을 내 말과 생각을 살려 2~3문장으로 정리해 줘.
+
+**02. 나의 표현 의도**
+
+내가 패러디하면서 무엇을 바꾸었고, 왜 그렇게 표현했는지를 내 답변을 바탕으로 2~3문장으로 정리해 줘.
+
+**03. AI에게 전달한 표현 특징**
+
+AI 이미지 표현 실험에 사용할 색채, 붓질, 질감, 빛, 분위기, 표정, 배경 등의 특징을 구체적으로 정리해 줘.
+
+그리고 마지막에 다음을 따로 만들어 줘.
+
+**AI 이미지 표현 실험용 요청문**
+
+내가 직접 그린 작품의 기본 구도, 주요 인물이나 캐릭터, 특징과 개성은 최대한 유지해 줘.
+
+단순히 더 화려하거나 더 사실적인 그림으로 만드는 것이 목적이 아니라, 내가 표현하고 싶었던 생각과 원작에서 발견한 특징을 **다른 방식으로 실험해 보는 것**이 목적이야.
+
+내가 대화에서 말한 색채, 붓질, 질감, 빛, 분위기, 표정, 배경 등의 표현 특징을 반영하되, 내 작품의 중요한 요소는 최대한 유지하도록 이미지 변환 요청문을 작성해 줘.
+
+특정 작가 이름만 사용해서 화풍을 따라 하도록 하지 말고, 내가 발견한 **구체적인 시각적 특징**을 중심으로 작성해 줘.
+
+### 중요한 점
+
+AI가 만들어 준 이미지가 내 작품보다 더 좋은 작품이라는 의미가 아니야.
+
+내가 직접 그린 작품이 중심이고, AI 이미지는 내 생각을 다른 방식으로 살펴보는 **‘AI 표현 실험’**이야.
+
+대화가 끝난 뒤 AI 이미지를 만든 다음에는 내가 직접 내 그림과 AI 결과를 비교해서 가상 미술관의
+
+**04. AI 변환 후 느낀 점**
+
+을 작성할 거야.
+
+04번 내용은 네가 대신 작성하지 마.
+
+이제 내가 보여주는 작품을 보고 **첫 번째 질문 하나만 해 줘.**`;
+
 export default function RegisterPage() {
+  const [copyStatus, setCopyStatus] = useState("");
+  const [showManualCopy, setShowManualCopy] = useState(false);
+  const copyLock = useRef(false);
+
+  async function copyCuratorPrompt() {
+    if (copyLock.current) return;
+    copyLock.current = true;
+    setCopyStatus("복사 중…");
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(AI_CURATOR_PROMPT);
+        copied = true;
+      }
+    } catch { /* Try the older copy method if clipboard access is blocked. */ }
+    if (!copied) {
+      const previousFocus = document.activeElement;
+      const textarea = document.createElement("textarea");
+      textarea.value = AI_CURATOR_PROMPT;
+      textarea.readOnly = true;
+      textarea.style.cssText = "position:fixed;top:0;left:-9999px;font-size:16px;";
+      try {
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        copied = document.execCommand("copy");
+      } catch { copied = false; }
+      finally {
+        textarea.remove();
+        previousFocus?.focus?.({ preventScroll: true });
+      }
+    }
+    setShowManualCopy(!copied);
+    setCopyStatus(copied ? "AI 큐레이터 프롬프트가 복사되었습니다." : "자동 복사가 안 됐어요. 아래 글을 길게 눌러 전체 선택한 뒤 복사해 주세요.");
+    copyLock.current = false;
+  }
+
+
   const params = useParams();
 
   const classNo = params?.classNo;
@@ -871,6 +984,31 @@ export default function RegisterPage() {
                   자신의 말로 작성해 주세요.
                 </p>
               </div>
+
+              <aside className="writing-card" aria-label="AI 큐레이터 안내" style={{ marginBottom: "24px" }}>
+                <h3>AI와 작품 이야기를 먼저 나눠 보세요.</h3>
+                <p>버튼을 눌러 프롬프트를 복사한 뒤, AI에 자신의 작품 이미지와 함께 붙여넣으세요.</p>
+                <button
+                  type="button"
+                  onClick={copyCuratorPrompt}
+                  disabled={copyStatus === "복사 중…"}
+                  style={{ minHeight: "48px", maxWidth: "100%", padding: "14px 20px", border: "none", borderRadius: "12px", background: "#211a14", color: "#ffffff", fontSize: "16px", lineHeight: 1.5, whiteSpace: "normal", cursor: "pointer" }}
+                >
+                  AI 큐레이터 프롬프트 복사
+                </button>
+                <p role="status" aria-live="polite">{copyStatus}</p>
+                {showManualCopy && (
+                  <textarea
+                    aria-label="직접 복사할 AI 큐레이터 프롬프트"
+                    readOnly
+                    value={AI_CURATOR_PROMPT}
+                    rows={8}
+                    onFocus={event => event.target.select()}
+                    style={{ width: "100%", boxSizing: "border-box", fontSize: "16px" }}
+                  />
+                )}
+                <p>대화 후 01~03에 답변을 붙여넣고, 04번 느낀 점은 직접 작성하세요.</p>
+              </aside>
 
               <div className="writing-grid">
 
