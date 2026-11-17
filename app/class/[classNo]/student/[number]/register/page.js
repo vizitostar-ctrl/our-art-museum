@@ -180,6 +180,98 @@ export default function RegisterPage() {
   const [aiFeature, setAiFeature] = useState("");
   const [aiReflection, setAiReflection] = useState("");
 
+
+  const [draftVersion, setDraftVersion] = useState(null);
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [draftMessage, setDraftMessage] = useState("");
+  const draftBusyRef = useRef(false);
+  const draftRequestRef = useRef(0);
+  const draftEditsRef = useRef(0);
+
+  // A delayed response must never replace text typed while the request was running.
+  async function loadRegistrationDraft(replace = false) {
+    if (draftBusyRef.current || submitLock.current) return;
+    if (replace && !window.confirm("지금 입력한 내용을 저장된 내용으로 바꿀까요?")) return;
+    const request = ++draftRequestRef.current;
+    const edits = draftEditsRef.current;
+    draftBusyRef.current = true;
+    setDraftBusy(true);
+    setDraftVersion(null);
+    setDraftMessage("저장된 내용을 확인하고 있어요.");
+    try {
+      const { data, error } = await supabase.rpc("get_my_learning_v1", {
+        p_class_no: classNumber, p_student_no: studentNumber,
+        p_access_code: accessCode.trim(),
+      });
+      if (error) throw error;
+      if (request !== draftRequestRef.current) return;
+      const saved = data?.payload?.registration_draft_v1;
+      if (!Number.isInteger(data?.version)) throw new Error("Invalid draft version");
+      if (draftEditsRef.current !== edits || (!replace && edits > 0)) {
+        setDraftMessage("입력한 내용을 유지했습니다. 저장된 내용을 불러오려면 아래 버튼을 눌러 주세요.");
+        return;
+      }
+      if (saved) {
+        if (["feature", "intent", "prompt_text", "ai_reflection"].some(key => typeof saved[key] !== "string")) {
+          throw new Error("Invalid draft");
+        }
+        setOriginalFeature(saved.feature);
+        setExpressionIntent(saved.intent);
+        setAiFeature(saved.prompt_text);
+        setAiReflection(saved.ai_reflection);
+      } else if (replace) {
+        setOriginalFeature(""); setExpressionIntent(""); setAiFeature(""); setAiReflection("");
+      }
+      setDraftVersion(data.version);
+      draftEditsRef.current = 0;
+      setDraftMessage(saved ? "임시 저장한 내용을 불러왔습니다." : "이미지 없이 작성 내용만 임시 저장할 수 있어요.");
+    } catch {
+      if (request === draftRequestRef.current) setDraftMessage("저장된 내용을 확인하지 못했습니다. 입력한 글은 그대로 두었습니다.");
+    } finally {
+      draftBusyRef.current = false;
+      setDraftBusy(false);
+    }
+  }
+
+  async function saveRegistrationDraft() {
+    if (!canSubmit || draftBusyRef.current || submitLock.current || draftVersion === null) return;
+    const request = ++draftRequestRef.current;
+    const edits = draftEditsRef.current;
+    draftBusyRef.current = true;
+    setDraftBusy(true);
+    setDraftMessage("작성 내용을 저장하고 있어요.");
+    try {
+      const { data, error } = await supabase.rpc("save_registration_draft_v1", {
+        p_class_no: classNumber, p_student_no: studentNumber, p_access_code: accessCode.trim(),
+        p_feature: originalFeature, p_intent: expressionIntent,
+        p_prompt_text: aiFeature, p_ai_reflection: aiReflection, p_version: draftVersion,
+      });
+      if (request !== draftRequestRef.current) return;
+      if (error) {
+        setDraftVersion(null);
+        setDraftMessage(error.code === "40001"
+          ? "다른 곳에서 저장된 내용이 있습니다. 입력한 글은 유지했습니다. 저장된 내용을 확인해 주세요."
+          : "임시 저장하지 못했습니다. 입력한 글은 유지했습니다. 접속코드와 제출 상태를 다시 확인해 주세요.");
+        return;
+      }
+      if (!Number.isInteger(data)) throw new Error("Invalid saved version");
+      setDraftVersion(data);
+      const unchanged = edits === draftEditsRef.current;
+      if (unchanged) draftEditsRef.current = 0;
+      setDraftMessage(unchanged
+        ? "작성 내용이 임시 저장되었습니다."
+        : "요청한 내용은 저장되었습니다. 그 뒤 수정한 글은 다시 저장해 주세요.");
+    } catch {
+      if (request === draftRequestRef.current) {
+        setDraftVersion(null);
+        setDraftMessage("저장 결과를 확인하지 못했습니다. 입력한 글은 유지했습니다. 저장된 내용을 다시 확인해 주세요.");
+      }
+    } finally {
+      draftBusyRef.current = false;
+      setDraftBusy(false);
+    }
+  }
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -224,9 +316,18 @@ export default function RegisterPage() {
     (submissionState === "new" ||
       submissionState === "revision");
 
+
+  useEffect(() => {
+    if (canSubmit) loadRegistrationDraft();
+    else setDraftVersion(null);
+    return () => { draftRequestRef.current += 1; };
+  }, [canSubmit, classNumber, studentNumber, accessCode]);
+
   const isCheckingAccess = accessStatus === "checking";
 
   function handleAccessCodeChange(event) {
+    draftRequestRef.current += 1;
+    setDraftVersion(null);
     setAccessCode(event.target.value);
 
     // 접속코드를 다시 입력하면 이전 확인 결과는 취소
@@ -451,7 +552,7 @@ export default function RegisterPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (submitLock.current || isSubmitted) return;
+    if (submitLock.current || isSubmitted || draftBusyRef.current) return;
 
     if (!validClass) {
       alert("학급 번호를 확인할 수 없습니다.");
@@ -737,7 +838,7 @@ export default function RegisterPage() {
                 onChange={handleAccessCodeChange}
                 placeholder="접속코드를 입력하세요"
                 autoComplete="off"
-                disabled={isCheckingAccess || isSubmitting}
+                disabled={isCheckingAccess || isSubmitting || draftBusy}
                 style={{
                   flex: "1 1 260px",
                   minWidth: 0,
@@ -755,7 +856,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handleAccessCheck}
-                disabled={isCheckingAccess || isSubmitting}
+                disabled={isCheckingAccess || isSubmitting || draftBusy}
                 style={{
                   border: "none",
                   borderRadius: "999px",
@@ -1010,6 +1111,21 @@ export default function RegisterPage() {
                 <p>대화 후 01~03에 답변을 붙여넣고, 04번 느낀 점은 직접 작성하세요.</p>
               </aside>
 
+
+              <aside className="writing-card" aria-label="작성 내용 임시 저장">
+                <p>사진이 없어도 01~04의 글을 먼저 저장할 수 있어요. 임시 저장은 작품 제출이 아닙니다.</p>
+                <button type="button" onClick={saveRegistrationDraft}
+                  disabled={draftBusy || isSubmitting || !canSubmit || draftVersion === null}
+                  style={{ minHeight: "44px", padding: "10px 16px", marginRight: "8px" }}>
+                  작성 내용 임시 저장
+                </button>
+                <button type="button" onClick={() => loadRegistrationDraft(true)}
+                  disabled={draftBusy || isSubmitting || !canSubmit}
+                  style={{ minHeight: "44px", padding: "10px 16px" }}>
+                  저장된 내용 불러오기
+                </button>
+                <p role="status" aria-live="polite">{draftMessage}</p>
+              </aside>
               <div className="writing-grid">
 
                 <article className="writing-card">
@@ -1031,11 +1147,7 @@ export default function RegisterPage() {
                   <textarea
                     id="originalFeature"
                     value={originalFeature}
-                    onChange={(event) =>
-                      setOriginalFeature(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => { draftEditsRef.current += 1; setOriginalFeature(event.target.value); }}
                     maxLength={300}
                     placeholder="예: 밝은 색과 어두운 색의 대비가 강하고, 짧고 반복적인 붓질이 보였습니다."
                   />
@@ -1064,11 +1176,7 @@ export default function RegisterPage() {
                   <textarea
                     id="expressionIntent"
                     value={expressionIntent}
-                    onChange={(event) =>
-                      setExpressionIntent(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => { draftEditsRef.current += 1; setExpressionIntent(event.target.value); }}
                     maxLength={300}
                     placeholder="예: 원작의 인물은 유지하면서 배경을 학교생활과 관련된 장면으로 바꾸었습니다."
                   />
@@ -1098,11 +1206,7 @@ export default function RegisterPage() {
                   <textarea
                     id="aiFeature"
                     value={aiFeature}
-                    onChange={(event) =>
-                      setAiFeature(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => { draftEditsRef.current += 1; setAiFeature(event.target.value); }}
                     maxLength={500}
                     placeholder="예: 선명한 색의 대비, 짧게 반복되는 붓질, 두껍고 거친 질감이 느껴지도록 표현해 주세요."
                   />
@@ -1120,7 +1224,7 @@ export default function RegisterPage() {
                   <textarea
                     id="aiReflection"
                     value={aiReflection}
-                    onChange={(event) => setAiReflection(event.target.value)}
+                    onChange={(event) => { draftEditsRef.current += 1; setAiReflection(event.target.value); }}
                     maxLength={500}
                     placeholder="예: AI가 원작의 거친 붓질을 잘 표현했지만, 인물의 표정은 내가 의도한 것보다 밝게 바뀌었습니다. 내가 직접 그린 그림의 익살스러운 표정이 더 마음에 듭니다."
                   />
@@ -1157,7 +1261,7 @@ export default function RegisterPage() {
                 type="submit"
                 className="submit-artwork-button"
                 disabled={
-                  isSubmitting ||
+                  isSubmitting || draftBusy ||
                   isSubmitted
                 }
               >
